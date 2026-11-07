@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laporan | ChioChio Motor Wash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A4174; --navy-d:#073355;
+  --orange:#F7AD19; --orange-d:#F58B1F;
+  --bg:#F3F5F8; --card:#FFFFFF; --border:#E6EAF0;
+  --text:#1E293B; --muted:#64748B;
+  --green:#1E8E5A; --red:#D94A2B;
+  --badge-blue:#EAF1FA; --badge-red:#FBE4DE;
+  --radius:18px;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--card);}
+
+#app{max-width:430px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative;}
+
+.topbar{position:sticky;top:0;z-index:10;background:var(--card);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;border-bottom:1px solid var(--border);}
+.topbar h1{font-size:17px;margin:0 0 2px;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
+.topbar p{margin:0;font-size:12px;color:var(--muted);}
+
+.page{padding:14px 16px 110px;flex:1;}
+
+.filterbar{display:flex;gap:8px;margin-bottom:14px;}
+.filterbar select{flex:1;padding:9px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card);font-size:13px;color:var(--text);}
+
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:14px;overflow-x:auto;}
+.tab{flex:1;text-align:center;padding:8px 6px;font-size:12px;font-weight:700;border-radius:9px;color:var(--muted);white-space:nowrap;cursor:pointer;}
+.tab.active{background:var(--navy);color:#fff;}
+
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.summary-card .lbl{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:4px;}
+.summary-card .val{font-size:16px;font-weight:800;color:var(--navy);font-family:Manrope,sans-serif;}
+.summary-total{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.summary-total .lbl{font-size:13px;font-weight:700;color:var(--muted);}
+.summary-total .val{font-size:17px;font-weight:800;color:var(--orange-d);font-family:Manrope,sans-serif;}
+
+.section-title{font-size:13px;font-weight:700;color:var(--text);margin:4px 0 10px;}
+
+.list-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;}
+.list-row:last-child{border-bottom:none;}
+.list-row.nolink{cursor:default;}
+.list-row .l-main{font-size:13.5px;font-weight:600;}
+.list-row .l-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.list-row .l-val{font-size:12.5px;font-weight:700;color:var(--navy);text-align:right;}
+.list-row .l-chev{color:var(--muted);margin-left:8px;}
+.seemore{text-align:center;padding:11px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;border-top:1px solid var(--border);}
+.pagination{display:flex;justify-content:center;gap:6px;margin:14px 0;flex-wrap:wrap;}
+.pagination button{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:12.5px;font-weight:700;cursor:pointer;}
+.pagination button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+.weektoggle{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:14px;}
+.weektoggle button{flex:1;border:0;background:transparent;padding:8px 6px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;}
+.weektoggle button.active{background:var(--navy);color:#fff;}
+
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(108px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:26px;box-shadow:0 6px 16px rgba(245,139,31,.4);z-index:15;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+.drill{position:fixed;inset:0;background:var(--bg);z-index:30;display:none;max-width:430px;margin:0 auto;overflow-y:auto;}
+.drill.open{display:block;}
+.drill-head{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;}
+.drill-head button{background:none;border:none;color:var(--navy);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;}
+.drill-head h2{font-size:15px;margin:0;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
+.drill-body{padding:16px;}
+
+.sheet-overlay{position:fixed;inset:0;background:rgba(10,20,30,.4);z-index:40;display:none;}
+.sheet-overlay.open{display:block;}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:#fff;border-radius:20px 20px 0 0;z-index:41;max-height:88vh;overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .25s ease;}
+.sheet.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:3px;margin:0 auto 14px;}
+.sheet h2{font-size:16px;color:var(--navy);margin:0 0 14px;font-weight:800;font-family:Manrope,sans-serif;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.field select,.field input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fafbfc;color:var(--text);}
+.field input[readonly]{background:#F0F4F8;color:var(--navy);font-weight:700;}
+.choice-row{display:flex;gap:8px;}
+.choice{flex:1;text-align:center;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;}
+.choice.sel{border-color:var(--navy);background:#EAF1F8;color:var(--navy);}
+.btn-submit{width:100%;background:var(--orange);color:#fff;border:none;padding:13px;border-radius:12px;font-size:14.5px;font-weight:700;margin-top:6px;cursor:pointer;}
+.btn-submit:active{background:var(--orange-d);}
+
+.item-actions{display:flex;align-items:center;gap:8px;}
+.pencil,.trash{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.pencil{background:var(--badge-blue);color:var(--navy);}
+.trash{background:var(--badge-red);color:var(--red);}
+.pencil svg,.trash svg{width:15px;height:15px;}
+.confirm-overlay{position:fixed;inset:0;background:rgba(10,20,30,.4);z-index:50;display:none;align-items:center;justify-content:center;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:#fff;border-radius:16px;padding:20px;width:85%;max-width:320px;text-align:center;}
+.confirm-box h3{font-size:15px;margin:0 0 6px;color:var(--text);}
+.confirm-box p{font-size:12.5px;color:var(--muted);margin:0 0 16px;}
+.confirm-row{display:flex;gap:8px;}
+.confirm-row button{flex:1;padding:11px;border-radius:10px;border:none;font-size:13.5px;font-weight:700;cursor:pointer;}
+.cbtn-cancel{background:#F0F4F8;color:var(--text);}
+.cbtn-del{background:#D94A2B;color:#fff;}
+
+/* ===== Bottom nav (acuan sama persis dengan Dashboard Navy+Oranye) ===== */
+.bottom-nav{display:grid;grid-template-columns:repeat(4,1fr);align-items:center;position:fixed;z-index:30;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:16px;right:16px;max-width:398px;margin:0 auto;height:80px;background:#FFFFFF;border:1px solid var(--border);border-radius:30px;box-shadow:0 12px 28px rgba(10,65,116,.12);}
+.nav-item{height:100%;border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:none;}
+.nav-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;}
+.nav-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
+.nav-label{font-size:10px;font-weight:700;white-space:nowrap;letter-spacing:.2px;}
+.nav-item.active{color:var(--orange-d);}
+.nav-item:active .nav-icon{scale:.92;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <h1 id="pageTitle">Laporan</h1>
+    <p id="pageSub">Rekap Tahunan 2026</p>
+  </div>
+
+  <div class="page" id="page-laporan">
+    <div class="filterbar">
+      <select id="filterMode"><option value="tahunan">Tahunan</option><option value="bulanan">Bulanan</option></select>
+      <select id="filterBulan" style="display:none;"></select>
+      <select id="filterTahun"><option>2026</option><option>2025</option></select>
+    </div>
+    <div class="tabs" id="laporanTabs">
+      <div class="tab active" data-ltab="pendapatan">Pendapatan</div>
+      <div class="tab" data-ltab="bahan">Bahan</div>
+      <div class="tab" data-ltab="pengeluaran">Pengeluaran</div>
+      <div class="tab" data-ltab="pemasukan">Pemasukan</div>
+    </div>
+
+    <div id="laporanSummary"></div>
+
+    <div class="section-title" id="breakdownTitle">Breakdown per Bulan</div>
+    <div class="list-card" id="laporanList"></div>
+    <footer style="text-align:center;padding:16px 2px 10px;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.2px;line-height:1.6;">ChioChio Motor Wash &middot; Admin Panel v1.0<br>Data tersinkron otomatis ke Google Sheet</footer>
+  </div>
+
+  <button class="fab" id="fabBtn">+</button>
+
+  <div class="drill" id="drillView">
+    <div class="drill-head">
+      <button id="drillBack"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg></button>
+      <h2 id="drillTitle">Detail</h2>
+    </div>
+    <div class="drill-body" id="drillBody"></div>
+  </div>
+
+  <div class="confirm-overlay" id="confirmOv">
+    <div class="confirm-box">
+      <h3>Hapus data ini?</h3>
+      <p id="confirmText">Data yang dihapus tidak bisa dikembalikan.</p>
+      <div class="confirm-row">
+        <button class="cbtn-cancel" onclick="document.getElementById('confirmOv').classList.remove('open')">Batal</button>
+        <button class="cbtn-del" onclick="doDeleteDetail()">Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="sheetOverlay"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheetTitle">Tambah Data</h2>
+    <div id="sheetBody"></div>
+  </div>
+
+</div>
+
+<!-- Bottom nav — acuan sama persis dengan Dashboard Navy+Oranye -->
+<nav class="bottom-nav" id="bottomNav">
+  <a class="nav-item" href="https://claude.ai/artifact/EHfvEdVmtfKk7XHVTKABqy" data-name="Dashboard">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
+    <span class="nav-label">HOME</span>
+  </a>
+  <a class="nav-item active" href="https://claude.ai/artifact/EAwjvon2XP46PsmtzxaKcs" data-name="Laporan">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19V10"/><path d="M12 19V5"/><path d="M20 19v-7"/></svg></span>
+    <span class="nav-label">LAPORAN</span>
+  </a>
+  <a class="nav-item" href="https://claude.ai/artifact/KAhyHrKeaZYr85S5aL9cQ4" data-name="Dana">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
+    <span class="nav-label">DANA</span>
+  </a>
+  <a class="nav-item" href="https://claude.ai/artifact/8P7Tgoosyqe6yaKmB7cmTf" data-name="Pengaturan">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span class="nav-label">PENGATURAN</span>
+  </a>
+</nav>
+
+<script>
+function fmtRp(n){return "Rp "+n.toLocaleString("id-ID");}
+const namaBulan=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+const namaBulanPanjang=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const bahanKategori=["Obat","Sampo","Kit Body","Kit Ban"];
+
+const bulanData = namaBulan.map((nm,i)=>{
+  const motor=80+i*6, pendapatan=motor*38000;
+  const kBahan={Obat:10+i,Sampo:8+i,"Kit Body":5+i,"Kit Ban":4+i};
+  const totalBahan=Object.values(kBahan).reduce((a,b)=>a+b,0);
+  const pengeluaran=1200000+i*45000;
+  return {nama:nm, motor, pendapatan, kBahan, totalBahan, pengeluaran, pemasukan:pendapatan-pengeluaran};
+});
+function daysInMonth(bi){ return [31,28,31,30,31,30,31,31,30,31,30,31][bi]; }
+function hariForBulan(bi){
+  const n=daysInMonth(bi);
+  return Array.from({length:n}).map((_,i)=>{
+    const motor=18+(i%9)*2, pendapatan=motor*38000;
+    const kBahan={Obat:1+i%3,Sampo:1+i%2,"Kit Body":i%4===0?1:0,"Kit Ban":i%5===0?1:0};
+    const totalBahan=Object.values(kBahan).reduce((a,b)=>a+b,0);
+    const pengeluaran=80000+(i%6)*15000;
+    return {day:i+1, tgl:`${i+1} ${namaBulan[bi]} 2026`, motor, pendapatan, kBahan, totalBahan, pengeluaran, pemasukan:pendapatan-pengeluaran};
+  });
+}
+function weekRanges(bi){
+  const n=daysInMonth(bi);
+  return [[1,7],[8,14],[15,21],[22,n]];
+}
+function weekAgg(bi,wIdx){
+  const [lo,hi]=weekRanges(bi)[wIdx];
+  const days=hariForBulan(bi).filter(d=>d.day>=lo&&d.day<=hi);
+  const kBahan=Object.fromEntries(bahanKategori.map(k=>[k,days.reduce((a,d)=>a+d.kBahan[k],0)]));
+  return {
+    motor:days.reduce((a,d)=>a+d.motor,0),
+    pendapatan:days.reduce((a,d)=>a+d.pendapatan,0),
+    kBahan, totalBahan:days.reduce((a,d)=>a+d.totalBahan,0),
+    pengeluaran:days.reduce((a,d)=>a+d.pengeluaran,0),
+    pemasukan:days.reduce((a,d)=>a+d.pemasukan,0)
+  };
+}
+const detailMotor=[{nama:"Yamaha Nmax",plat:"DV 9806 XX",jenis:"Trail",harga:50000,ket:""},{nama:"Honda Beat",plat:"DV 1123 AB",jenis:"Harian",harga:30000,ket:"Cuci + semir ban"},{nama:"Honda Vario",plat:"DV 7788 CD",jenis:"Harian",harga:30000,ket:""}];
+const detailPengeluaran=[{ket:"Beli sabun cuci",nominal:120000},{ket:"Servis kompresor",nominal:300000}];
+
+document.getElementById('filterBulan').innerHTML = namaBulanPanjang.map((b,i)=>`<option value="${i}">${b}</option>`).join('');
+
+let laporanTab='pendapatan', filterMode='tahunan', selBulan=9;
+
+function tabLabel(t){return {pendapatan:"Pendapatan",bahan:"Penggunaan Bahan",pengeluaran:"Pengeluaran",pemasukan:"Pemasukan (otomatis)"}[t];}
+
+function renderSummary(){
+  const wrap=document.getElementById('laporanSummary');
+  const base = filterMode==='tahunan'
+    ? {motor:bulanData.reduce((a,b)=>a+b.motor,0), pendapatan:bulanData.reduce((a,b)=>a+b.pendapatan,0), kBahan:Object.fromEntries(bahanKategori.map(k=>[k,bulanData.reduce((a,b)=>a+b.kBahan[k],0)])), totalBahan:bulanData.reduce((a,b)=>a+b.totalBahan,0), pengeluaran:bulanData.reduce((a,b)=>a+b.pengeluaran,0), pemasukan:bulanData.reduce((a,b)=>a+b.pemasukan,0)}
+    : bulanData[selBulan];
+
+  if(laporanTab==='pendapatan'){
+    wrap.innerHTML=`<div class="summary-grid">
+      <div class="summary-card"><div class="lbl">Jumlah Motor</div><div class="val">${base.motor.toLocaleString('id-ID')}</div></div>
+      <div class="summary-card"><div class="lbl">Total Pendapatan</div><div class="val">${fmtRp(base.pendapatan)}</div></div>
+    </div>`;
+  } else if(laporanTab==='bahan'){
+    wrap.innerHTML=`<div class="summary-grid">
+      ${bahanKategori.map(k=>`<div class="summary-card"><div class="lbl">${k}</div><div class="val">${base.kBahan[k]} botol</div></div>`).join('')}
+    </div>
+    <div class="summary-total"><div class="lbl">Total Pemakaian Bahan</div><div class="val">${base.totalBahan} botol</div></div>`;
+  } else if(laporanTab==='pengeluaran'){
+    wrap.innerHTML=`<div class="summary-total"><div class="lbl">Total Pengeluaran</div><div class="val">${fmtRp(base.pengeluaran)}</div></div>`;
+  } else {
+    wrap.innerHTML=`<div class="summary-total"><div class="lbl">Total Pemasukan Bersih</div><div class="val">${fmtRp(base.pemasukan)}</div></div>`;
+  }
+}
+
+function rowValFor(t,d){
+  if(t==='pendapatan') return {main:d.motor+" motor", val:fmtRp(d.pendapatan)};
+  if(t==='bahan'){
+    const breakdown=bahanKategori.filter(k=>d.kBahan[k]>0).map(k=>k+" "+d.kBahan[k]).join(' · ');
+    return {main:breakdown, val:d.totalBahan+" botol"};
+  }
+  if(t==='pengeluaran') return {main:"", val:fmtRp(d.pengeluaran)};
+  return {main:"", val:fmtRp(d.pemasukan)};
+}
+
+function renderLaporanList(){
+  document.getElementById('pageSub').textContent = (filterMode==='tahunan'?"Rekap Tahunan 2026 · ":`Rekap ${namaBulan[selBulan]} 2026 · `)+tabLabel(laporanTab);
+  document.getElementById('breakdownTitle').textContent = filterMode==='tahunan' ? "Breakdown per Bulan" : "Breakdown per Tanggal";
+  const wrap=document.getElementById('laporanList');
+  const data = filterMode==='tahunan' ? bulanData : hariForBulan(selBulan);
+  const clickable = laporanTab!=='pemasukan';
+  wrap.innerHTML = data.map((d,idx)=>{
+    const label = filterMode==='tahunan' ? d.nama+" 2026" : d.tgl;
+    const r = rowValFor(laporanTab,d);
+    const onclick = clickable ? (filterMode==='tahunan' ? `onclick="openBulan(${idx})"` : `onclick="openHari(${idx})"`) : '';
+    return `<div class="list-row ${clickable?'':'nolink'}" ${onclick}>
+      <div><div class="l-main">${label}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div>
+      <div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div>${clickable?'<span class="l-chev">›</span>':''}</div>
+    </div>`;
+  }).join('');
+  renderSummary();
+}
+
+const svgPencil='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const svgTrash='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+function actionIcons(key){return `<div class="item-actions"><div class="pencil" onclick="editDetailItem('${key}')">${svgPencil}</div><div class="trash" onclick="askDeleteDetail('${key}')">${svgTrash}</div></div>`;}
+let delDetailCtx=null;
+function askDeleteDetail(key){
+  delDetailCtx=key;
+  document.getElementById('confirmText').textContent = 'Item ini akan dihapus dari rekap.';
+  document.getElementById('confirmOv').classList.add('open');
+}
+function doDeleteDetail(){
+  document.getElementById('confirmOv').classList.remove('open');
+  const row=document.querySelector(`[data-key="${delDetailCtx}"]`);
+  if(row) row.remove();
+}
+function editDetailItem(key){
+  openForm(laporanTab,true);
+}
+function detailBodyFor(t,d){
+  if(t==='pendapatan') return `<div class="section-title">Detail Kendaraan</div><div class="list-card">${detailMotor.map((m,i)=>`<div class="list-row nolink" data-key="p${i}"><div><div class="l-main">${i+1}. ${m.nama} — ${m.plat}</div><div class="l-sub" style="font-size:12.5px;">${m.jenis}${m.ket?' · '+m.ket:''}</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${fmtRp(m.harga)}</div>${actionIcons('p'+i)}</div></div>`).join('')}</div>`;
+  if(t==='bahan') return `<div class="section-title">Rincian Bahan</div><div class="list-card">${bahanKategori.map((k,i)=>`<div class="list-row nolink" data-key="b${i}"><div class="l-main">${k}</div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${d.kBahan[k]} botol</div>${actionIcons('b'+i)}</div></div>`).join('')}</div>`;
+  if(t==='pengeluaran') return `<div class="section-title">Rincian Pengeluaran</div><div class="list-card">${detailPengeluaran.map((p,i)=>`<div class="list-row nolink" data-key="e${i}"><div class="l-main">${p.ket}</div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${fmtRp(p.nominal)}</div>${actionIcons('e'+i)}</div></div>`).join('')}</div>`;
+  return '';
+}
+
+let drillBulanIdx=0, drillMode='harian', drillPage=0;
+function renderDrillHarian(bidx){
+  const hari=hariForBulan(bidx);
+  const perPage=10, totalPage=Math.ceil(hari.length/perPage);
+  if(drillPage>=totalPage) drillPage=totalPage-1;
+  const shown=hari.slice(drillPage*perPage,(drillPage+1)*perPage);
+  let pag='';
+  if(totalPage>1){
+    pag=`<div class="pagination">${Array.from({length:totalPage}).map((_,p)=>`<button class="${p===drillPage?'active':''}" onclick="drillPage=${p};renderDrillBody()">${p+1}</button>`).join('')}</div>`;
+  }
+  return `<div class="section-title">Rekap Harian</div><div class="list-card">
+    ${shown.map((h)=>{const r=rowValFor(laporanTab,h);return `<div class="list-row" onclick="openHariFromDrill(${bidx},${h.day-1})"><div><div class="l-main">${h.tgl}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div><div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div><span class="l-chev">›</span></div></div>`;}).join('')}
+  </div>${pag}`;
+}
+function renderDrillMingguan(bidx){
+  const ranges=weekRanges(bidx);
+  return `<div class="section-title">Rekap Mingguan</div><div class="list-card">
+    ${ranges.map((rg,wi)=>{const w=weekAgg(bidx,wi);const r=rowValFor(laporanTab,w);return `<div class="list-row" onclick="openMinggu(${bidx},${wi})"><div><div class="l-main">Minggu ${wi+1}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div><div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div><span class="l-chev">›</span></div></div>`;}).join('')}
+  </div>`;
+}
+function renderDrillBody(){
+  document.getElementById('drillBody').innerHTML = `<div class="weektoggle" id="weekToggle">
+      <button class="${drillMode==='harian'?'active':''}" onclick="drillMode='harian';drillPage=0;renderDrillBody()">Harian</button>
+      <button class="${drillMode==='mingguan'?'active':''}" onclick="drillMode='mingguan';renderDrillBody()">Mingguan</button>
+    </div>` + (laporanTab==='pemasukan' ? renderDrillHarian(drillBulanIdx) : (drillMode==='harian'?renderDrillHarian(drillBulanIdx):renderDrillMingguan(drillBulanIdx)));
+}
+function openMinggu(bidx,wIdx){
+  const [lo,hi]=weekRanges(bidx)[wIdx];
+  const hari=hariForBulan(bidx).filter(d=>d.day>=lo&&d.day<=hi);
+  document.getElementById('drillTitle').textContent = `Minggu ${wIdx+1} — ${namaBulan[bidx]} 2026`;
+  document.getElementById('drillBody').innerHTML = `<div class="section-title">Rincian Harian</div><div class="list-card">
+    ${hari.map((h)=>{const r=rowValFor(laporanTab,h);return `<div class="list-row" onclick="openHariFromDrill(${bidx},${h.day-1})"><div><div class="l-main">${h.tgl}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div><div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div><span class="l-chev">›</span></div></div>`;}).join('')}
+  </div>`;
+}
+function openBulan(idx){
+  drillBulanIdx=idx; drillMode='harian'; drillPage=0;
+  const b=bulanData[idx];
+  document.getElementById('drillTitle').textContent = b.nama+" 2026 — "+tabLabel(laporanTab);
+  renderDrillBody();
+  document.getElementById('drillView').classList.add('open');
+}
+function openHari(idx){
+  const d=hariForBulan(selBulan)[idx];
+  document.getElementById('drillTitle').textContent = d.tgl;
+  document.getElementById('drillBody').innerHTML = detailBodyFor(laporanTab,d);
+  document.getElementById('drillView').classList.add('open');
+}
+function openHariFromDrill(bidx,hidx){
+  const d=hariForBulan(bidx)[hidx];
+  document.getElementById('drillTitle').textContent = d.tgl;
+  document.getElementById('drillBody').innerHTML = detailBodyFor(laporanTab,d);
+}
+document.getElementById('drillBack').onclick=()=>document.getElementById('drillView').classList.remove('open');
+
+document.getElementById('filterMode').onchange=e=>{
+  filterMode=e.target.value;
+  document.getElementById('filterBulan').style.display = filterMode==='bulanan' ? 'block':'none';
+  renderLaporanList(); updateFab();
+};
+document.getElementById('filterBulan').onchange=e=>{ selBulan=+e.target.value; renderLaporanList(); };
+
+document.querySelectorAll('#laporanTabs .tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('#laporanTabs .tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  laporanTab=t.dataset.ltab;
+  renderLaporanList(); updateFab();
+});
+
+function updateFab(){
+  const fab=document.getElementById('fabBtn');
+  if(laporanTab==='pemasukan'){ fab.style.display='none'; }
+  else { fab.style.display='flex'; }
+}
+document.getElementById('fabBtn').onclick=()=>{ openForm(laporanTab); };
+
+const sheet=document.getElementById('sheet'), sheetOverlay=document.getElementById('sheetOverlay');
+function closeSheet(){sheet.classList.remove('open');sheetOverlay.classList.remove('open');}
+sheetOverlay.onclick=closeSheet;
+function pad3(n){return String(n).padStart(3,'0');}
+function genId(prefix,storeKey){
+  const now=new Date();
+  const tgl=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+  const periodKey=now.getFullYear()+'-'+(now.getMonth()+1);
+  const store=JSON.parse(sessionStorage.getItem(storeKey)||'{}');
+  let counter = store.period===periodKey ? store.counter+1 : 1;
+  sessionStorage.setItem(storeKey, JSON.stringify({period:periodKey, counter}));
+  return prefix+'-'+tgl+'-'+pad3(counter);
+}
+function openForm(type,isEdit){
+  const titles={pendapatan:'Pendapatan',bahan:'Penggunaan Bahan',pengeluaran:'Pengeluaran'};
+  document.getElementById('sheetTitle').textContent = (isEdit?'Edit ':'Tambah ')+titles[type];
+  let html='';
+  if(type==='pendapatan'){
+    const tglHariIni=new Date().toISOString().slice(0,10);
+    html=`<div class="field"><label>ID Pendapatan</label><input type="text" value="${genId('PDT','idctr_pdt')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Tanggal</label><input type="date" id="f-pdt-tanggal" value="${tglHariIni}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Nama Motor</label><input type="text" id="f-pdt-namaMotor" placeholder="cth: Honda Beat"></div>
+      <div class="field"><label>Jenis Kendaraan</label><div class="choice-row" id="f-pdt-jenisRow">
+        <div class="choice sel" data-jenis="Harian" onclick="selChoice(this,'harian')">Harian<br><small>Rp 30.000</small></div>
+        <div class="choice" data-jenis="Trail" onclick="selChoice(this,'trail')">Trail<br><small>Rp 50.000</small></div></div></div>
+      <div class="field"><label>Plat Nomor</label><input type="text" id="f-pdt-plat" placeholder="DV 1234 XX"></div>
+      <div class="field"><label>Tarif</label><input type="text" id="f-pdt-tarif" value="30000" readonly></div>
+      <div class="field"><label>Keterangan (opsional)</label><input type="text" id="f-pdt-ket" placeholder="cth: Cuci + semir ban"></div>
+      <div id="f-pdt-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>`;
+  } else if(type==='bahan'){
+    html=`<div class="field"><label>Tanggal</label><input type="date"></div>
+      <div class="field"><label>Nama Bahan</label><select>${bahanKategori.map(k=>`<option>${k}</option>`).join('')}</select></div>
+      <div class="field"><label>Jumlah Terpakai (botol)</label><input type="number" placeholder="0"></div>`;
+  } else if(type==='pengeluaran'){
+    html=`<div class="field"><label>ID Pengeluaran</label><input type="text" value="${genId('PNG','idctr_png')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Tanggal</label><input type="date"></div>
+      <div class="field"><label>Uraian Pengeluaran</label><input type="text" placeholder="cth: Beli sabun cuci"></div>
+      <div class="field"><label>Nominal</label><input type="number" placeholder="0"></div>
+      <div class="field"><label>Keterangan (opsional)</label><input type="text" placeholder="cth: untuk stok 1 bulan"></div>`;
+  }
+  if(type==='pendapatan'){
+    html += `<button class="btn-submit" id="btnSimpanPendapatan" onclick="simpanPendapatanKeSheet()">Simpan</button>`;
+  } else {
+    html += `<button class="btn-submit" onclick="closeSheet()">Simpan</button>`;
+  }
+  document.getElementById('sheetBody').innerHTML=html;
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+function selChoice(el,v){
+  el.parentElement.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  if(v==='harian'){ document.getElementById('f-pdt-tarif').value='30000'; }
+  if(v==='trail'){ document.getElementById('f-pdt-tarif').value='50000'; }
+}
+
+// ====================================================================
+// Sambungan ke Apps Script — modul Pendapatan (POST simpan data)
+// ====================================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
+
+function simpanPendapatanKeSheet(){
+  const btn=document.getElementById('btnSimpanPendapatan');
+  const statusEl=document.getElementById('f-pdt-status');
+  const jenisEl=document.querySelector('#f-pdt-jenisRow .choice.sel');
+
+  const payload={
+    modul:'pendapatan',
+    namaMotor:document.getElementById('f-pdt-namaMotor').value,
+    nomorPolisi:document.getElementById('f-pdt-plat').value,
+    jenisKendaraan:jenisEl?jenisEl.dataset.jenis:'',
+    tarif:Number(document.getElementById('f-pdt-tarif').value)||0,
+    keterangan:document.getElementById('f-pdt-ket').value
+  };
+
+  btn.disabled=true; btn.textContent='Menyimpan...';
+  statusEl.style.display='none';
+
+  const formBody=new URLSearchParams();
+  Object.keys(payload).forEach(k=>formBody.append(k,payload[k]));
+
+  fetch(APPS_SCRIPT_URL,{
+    method:'POST',
+    body:formBody
+  })
+  .then(res=>res.json())
+  .then(res=>{
+    if(res.status==='success'){
+      closeSheet();
+    } else {
+      btn.disabled=false; btn.textContent='Simpan';
+      statusEl.style.display='block'; statusEl.style.color='var(--red)';
+      statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan');
+    }
+  })
+  .catch(err=>{
+    btn.disabled=false; btn.textContent='Simpan';
+    statusEl.style.display='block'; statusEl.style.color='var(--red)';
+    statusEl.textContent='Gagal terhubung ke server: '+err.message;
+  });
+}
+
+renderLaporanList();
+updateFab();
+</script>
+</body>
+</html>

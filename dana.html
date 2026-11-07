@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dana | ChioChio Motor Wash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A4174; --navy-d:#073355;
+  --orange:#F7AD19; --orange-d:#F58B1F;
+  --bg:#F3F5F8; --card:#FFFFFF; --border:#E6EAF0;
+  --text:#1E293B; --muted:#64748B;
+  --green:#1E8E5A; --red:#D94A2B;
+  --radius:18px;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--card);}
+
+#app{max-width:430px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative;}
+
+.topbar{position:sticky;top:0;z-index:10;background:var(--card);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;border-bottom:1px solid var(--border);}
+.topbar h1{font-size:17px;margin:0 0 2px;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
+.topbar p{margin:0;font-size:12px;color:var(--muted);}
+
+.page{padding:14px 16px 110px;flex:1;}
+
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:14px;}
+.tab{flex:1;text-align:center;padding:8px 6px;font-size:13px;font-weight:700;border-radius:9px;color:var(--muted);cursor:pointer;}
+.tab.active{background:var(--navy);color:#fff;}
+
+.saldo-card{background:linear-gradient(135deg,var(--navy),var(--navy-d));border-radius:var(--radius);padding:18px;color:#fff;margin-bottom:16px;}
+.saldo-card .lbl{font-size:12px;opacity:.8;}
+.saldo-card .val{font-size:24px;font-weight:800;margin-top:4px;font-family:Manrope,sans-serif;}
+
+.section-title{font-size:13px;font-weight:700;color:var(--text);margin:4px 0 10px;}
+
+.list-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);}
+.list-row:last-child{border-bottom:none;}
+.list-row .l-main{font-size:13.5px;font-weight:600;}
+.list-row .l-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.list-row .l-val{font-size:12.5px;font-weight:700;}
+.seemore{text-align:center;padding:11px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;border-top:1px solid var(--border);}
+
+.drill{position:fixed;inset:0;background:var(--bg);z-index:30;display:none;max-width:430px;margin:0 auto;overflow-y:auto;}
+.drill.open{display:block;}
+.drill-head{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;}
+.drill-head button{background:none;border:none;color:var(--navy);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;}
+.drill-head h2{font-size:15px;margin:0;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
+.drill-body{padding:16px;}
+
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(108px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:26px;box-shadow:0 6px 16px rgba(245,139,31,.4);z-index:15;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+.sheet-overlay{position:fixed;inset:0;background:rgba(10,20,30,.4);z-index:40;display:none;}
+.sheet-overlay.open{display:block;}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:#fff;border-radius:20px 20px 0 0;z-index:41;max-height:88vh;overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .25s ease;}
+.sheet.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:3px;margin:0 auto 14px;}
+.sheet h2{font-size:16px;color:var(--navy);margin:0 0 14px;font-weight:800;font-family:Manrope,sans-serif;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.field select,.field input{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fafbfc;color:var(--text);}
+.choice-row{display:flex;gap:8px;}
+.choice{flex:1;text-align:center;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;}
+.choice.sel{border-color:var(--navy);background:#EAF1F8;color:var(--navy);}
+.btn-submit{width:100%;background:var(--orange);color:#fff;border:none;padding:13px;border-radius:12px;font-size:14.5px;font-weight:700;margin-top:6px;cursor:pointer;}
+.btn-submit:active{background:var(--orange-d);}
+
+/* ===== Bottom nav (acuan sama persis dengan Dashboard Navy+Oranye) ===== */
+.bottom-nav{display:grid;grid-template-columns:repeat(4,1fr);align-items:center;position:fixed;z-index:30;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:16px;right:16px;max-width:398px;margin:0 auto;height:80px;background:#FFFFFF;border:1px solid var(--border);border-radius:30px;box-shadow:0 12px 28px rgba(10,65,116,.12);}
+.nav-item{height:100%;border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:none;}
+.nav-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;}
+.nav-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
+.nav-label{font-size:10px;font-weight:700;white-space:nowrap;letter-spacing:.2px;}
+.nav-item.active{color:var(--orange-d);}
+.nav-item:active .nav-icon{scale:.92;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <h1>Dana</h1>
+    <p>Kelola saldo &amp; riwayat dana</p>
+  </div>
+
+  <div class="page">
+    <div class="tabs" id="danaTabs">
+      <div class="tab active" data-dtab="simpanan">Dana Simpanan</div>
+      <div class="tab" data-dtab="bahan">Dana Pembelian Bahan</div>
+    </div>
+
+    <div class="saldo-card">
+      <div class="lbl" id="saldoLabel">Saldo Dana Simpanan</div>
+      <div class="val" id="saldoVal">Rp 3.250.000</div>
+    </div>
+
+    <div class="section-title">Riwayat</div>
+    <div class="list-card" id="danaList"></div>
+    <footer style="text-align:center;padding:16px 2px 10px;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.2px;line-height:1.6;">ChioChio Motor Wash &middot; Admin Panel v1.0<br>Data tersinkron otomatis ke Google Sheet</footer>
+  </div>
+
+  <button class="fab" id="fabBtn">+</button>
+
+  <div class="drill" id="drillView">
+    <div class="drill-head">
+      <button id="drillBack"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg></button>
+      <h2 id="drillTitle">Riwayat</h2>
+    </div>
+    <div class="drill-body" id="drillBody"></div>
+  </div>
+
+  <div class="sheet-overlay" id="sheetOverlay"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheetTitle">Tambah Data</h2>
+    <div id="sheetBody"></div>
+  </div>
+
+</div>
+
+<!-- Bottom nav — acuan sama persis dengan Dashboard Navy+Oranye -->
+<nav class="bottom-nav" id="bottomNav">
+  <a class="nav-item" href="https://claude.ai/artifact/EHfvEdVmtfKk7XHVTKABqy" data-name="Dashboard">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
+    <span class="nav-label">HOME</span>
+  </a>
+  <a class="nav-item" href="https://claude.ai/artifact/EAwjvon2XP46PsmtzxaKcs" data-name="Laporan">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19V10"/><path d="M12 19V5"/><path d="M20 19v-7"/></svg></span>
+    <span class="nav-label">LAPORAN</span>
+  </a>
+  <a class="nav-item active" href="https://claude.ai/artifact/KAhyHrKeaZYr85S5aL9cQ4" data-name="Dana">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
+    <span class="nav-label">DANA</span>
+  </a>
+  <a class="nav-item" href="https://claude.ai/artifact/8P7Tgoosyqe6yaKmB7cmTf" data-name="Pengaturan">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span class="nav-label">PENGATURAN</span>
+  </a>
+</nav>
+
+<script>
+const danaSimpanan=[{label:"Setor dari pendapatan",tgl:"28 Okt 2026",nilai:"+Rp 500.000"},{label:"Servis kompresor",tgl:"20 Okt 2026",nilai:"-Rp 350.000"},{label:"Setor dari pendapatan",tgl:"15 Okt 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"8 Okt 2026",nilai:"+Rp 500.000"},{label:"Beli spare part",tgl:"3 Okt 2026",nilai:"-Rp 180.000"},{label:"Setor dari pendapatan",tgl:"28 Sep 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"21 Sep 2026",nilai:"+Rp 500.000"},{label:"Ganti oli kompresor",tgl:"14 Sep 2026",nilai:"-Rp 220.000"},{label:"Setor dari pendapatan",tgl:"7 Sep 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"31 Agu 2026",nilai:"+Rp 500.000"},{label:"Beli selang air",tgl:"24 Agu 2026",nilai:"-Rp 150.000"},{label:"Setor dari pendapatan",tgl:"17 Agu 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"10 Agu 2026",nilai:"+Rp 500.000"},{label:"Servis alat vacuum",tgl:"3 Agu 2026",nilai:"-Rp 275.000"}];
+const danaBahan=[{label:"Beli sabun cuci",tgl:"27 Okt 2026",nilai:"-Rp 420.000"},{label:"Setor alokasi bulanan",tgl:"1 Okt 2026",nilai:"+Rp 1.500.000"},{label:"Beli kit body",tgl:"24 Sep 2026",nilai:"-Rp 280.000"},{label:"Beli kit ban",tgl:"18 Sep 2026",nilai:"-Rp 210.000"},{label:"Setor alokasi bulanan",tgl:"1 Sep 2026",nilai:"+Rp 1.500.000"},{label:"Beli obat cuci",tgl:"22 Agu 2026",nilai:"-Rp 350.000"},{label:"Beli sampo motor",tgl:"15 Agu 2026",nilai:"-Rp 300.000"},{label:"Setor alokasi bulanan",tgl:"1 Agu 2026",nilai:"+Rp 1.500.000"},{label:"Beli kit body",tgl:"25 Jul 2026",nilai:"-Rp 280.000"},{label:"Beli obat cuci",tgl:"18 Jul 2026",nilai:"-Rp 350.000"},{label:"Setor alokasi bulanan",tgl:"1 Jul 2026",nilai:"+Rp 1.500.000"}];
+
+let danaTab='simpanan';
+function rowHtml(d){ return `<div class="list-row"><div><div class="l-main">${d.label}</div><div class="l-sub">${d.tgl}</div></div><div class="l-val" style="color:${d.nilai[0]==='+'?'var(--green)':'var(--red)'}">${d.nilai}</div></div>`; }
+function openDanaFull(){
+  const data = danaTab==='simpanan'?danaSimpanan:danaBahan;
+  document.getElementById('drillTitle').textContent = danaTab==='simpanan' ? 'Seluruh Riwayat Dana Simpanan' : 'Seluruh Riwayat Dana Pembelian Bahan';
+  document.getElementById('drillBody').innerHTML = `<div class="list-card">${data.map(rowHtml).join('')}</div>`;
+  document.getElementById('drillView').classList.add('open');
+}
+function renderDanaList(){
+  const data = danaTab==='simpanan'?danaSimpanan:danaBahan;
+  const shown = data.slice(0,10);
+  let html = shown.map(rowHtml).join('');
+  if(data.length>10) html += `<div class="seemore" onclick="openDanaFull()">Lihat semua ↗</div>`;
+  document.getElementById('danaList').innerHTML = html;
+  document.getElementById('saldoLabel').textContent = danaTab==='simpanan'?'Saldo Dana Simpanan':'Saldo Dana Pembelian Bahan';
+  document.getElementById('saldoVal').textContent = danaTab==='simpanan'?'Rp 3.250.000':'Rp 1.080.000';
+}
+document.querySelectorAll('#danaTabs .tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('#danaTabs .tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  danaTab=t.dataset.dtab;
+  renderDanaList();
+});
+document.getElementById('drillBack').onclick=()=>document.getElementById('drillView').classList.remove('open');
+
+const sheet=document.getElementById('sheet'), sheetOverlay=document.getElementById('sheetOverlay');
+function closeSheet(){sheet.classList.remove('open');sheetOverlay.classList.remove('open');}
+sheetOverlay.onclick=closeSheet;
+function pad3(n){return String(n).padStart(3,'0');}
+function genId(prefix,storeKey){
+  const now=new Date();
+  const tgl=String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
+  const periodKey=now.getFullYear()+'-'+(now.getMonth()+1);
+  const store=JSON.parse(sessionStorage.getItem(storeKey)||'{}');
+  let counter = store.period===periodKey ? store.counter+1 : 1;
+  sessionStorage.setItem(storeKey, JSON.stringify({period:periodKey, counter}));
+  return prefix+'-'+tgl+'-'+pad3(counter);
+}
+function openForm(type){
+  const titles={'dana-simpanan':'Dana Simpanan','dana-bahan':'Dana Pembelian Bahan'};
+  document.getElementById('sheetTitle').textContent = 'Tambah '+titles[type];
+  let html='';
+  if(type==='dana-simpanan'){
+    html=`<div class="field"><label>ID Dana Simpanan</label><input type="text" value="${genId('DSP','idctr_dsp')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Tanggal</label><input type="date"></div>
+      <div class="field"><label>Jenis</label><div class="choice-row">
+        <div class="choice sel" onclick="selChoice(this)">Setor</div>
+        <div class="choice" onclick="selChoice(this)">Tarik</div></div></div>
+      <div class="field"><label>Keterangan</label><input type="text" placeholder="cth: Setor dari pendapatan"></div>
+      <div class="field"><label>Nominal</label><input type="number" placeholder="0"></div>`;
+  } else {
+    html=`<div class="field"><label>ID Dana Pembelian Bahan</label><input type="text" value="${genId('DPB','idctr_dpb')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Tanggal</label><input type="date"></div>
+      <div class="field"><label>Jenis</label><div class="choice-row">
+        <div class="choice sel" onclick="selChoice(this)">Setor</div>
+        <div class="choice" onclick="selChoice(this)">Pakai</div></div></div>
+      <div class="field"><label>Keterangan</label><input type="text" placeholder="cth: Beli sabun cuci"></div>
+      <div class="field"><label>Nominal</label><input type="number" placeholder="0"></div>`;
+  }
+  html += `<button class="btn-submit" onclick="closeSheet()">Simpan</button>`;
+  document.getElementById('sheetBody').innerHTML=html;
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+function selChoice(el){ el.parentElement.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+document.getElementById('fabBtn').onclick=()=>{ openForm(danaTab==='simpanan'?'dana-simpanan':'dana-bahan'); };
+
+renderDanaList();
+</script>
+</body>
+</html>

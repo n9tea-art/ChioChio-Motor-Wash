@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pengaturan | ChioChio Motor Wash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A4174; --navy-d:#073355;
+  --orange:#F7AD19; --orange-d:#F58B1F;
+  --bg:#F3F5F8; --card:#FFFFFF; --border:#E6EAF0;
+  --text:#1E293B; --muted:#64748B; --red:#D94A2B;
+  --radius:18px;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{margin:0;font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:20;background:var(--card);}
+
+#app{max-width:430px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;position:relative;}
+
+.topbar{position:sticky;top:0;z-index:10;background:var(--card);padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;border-bottom:1px solid var(--border);}
+.topbar h1{font-size:17px;margin:0;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
+
+.page{padding:14px 16px 110px;flex:1;}
+
+.profile-head{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px;cursor:pointer;}
+.avatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-d));color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;font-family:Manrope,sans-serif;flex-shrink:0;}
+.profile-head .pname{font-size:14.5px;font-weight:700;color:var(--navy);}
+.profile-head .prole{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.profile-head .chev{margin-left:auto;color:var(--muted);}
+
+.group-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:18px 2px 8px;}
+.group-title:first-of-type{margin-top:0;}
+.list-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.list-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--border);cursor:pointer;}
+.list-row:last-child{border-bottom:none;}
+.row-icon{width:34px;height:34px;border-radius:10px;background:#EAF1F8;color:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.row-icon svg{width:17px;height:17px;}
+.row-icon.red{background:var(--badge-red,#FBE4DE);color:var(--red);}
+.row-main{flex:1;}
+.row-main .t{font-size:13.5px;font-weight:600;}
+.row-main .s{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.row-chev{color:var(--muted);flex-shrink:0;}
+
+.switch{position:relative;width:42px;height:24px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.switch .slider{position:absolute;inset:0;background:var(--border);border-radius:24px;transition:.2s;cursor:pointer;}
+.switch input:disabled + .slider{opacity:.5;cursor:not-allowed;}
+.switch .slider::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
+.switch input:checked + .slider{background:var(--orange);}
+.switch input:checked + .slider::before{transform:translateX(18px);}
+
+.drill{position:fixed;inset:0;background:var(--bg);z-index:30;display:none;max-width:430px;margin:0 auto;overflow-y:auto;}
+.drill.open{display:block;}
+.drill-head{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;}
+.drill-head button{background:rgba(14,42,71,.08);border:none;border-radius:10px;color:var(--navy);cursor:pointer;width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;}
+.drill-head h2{font-size:15px;margin:0;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
+.drill-body{padding:16px 16px 40px;}
+
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;}
+.field input,.field textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font-size:14px;background:#fafbfc;color:var(--text);}
+.field input[disabled]{background:#F0F4F8;color:var(--muted);}
+.btn-submit{width:100%;background:var(--orange);color:#fff;border:none;padding:13px;border-radius:12px;font-size:14.5px;font-weight:700;margin-top:6px;cursor:pointer;}
+.btn-submit:active{background:var(--orange-d);}
+.btn-outline{width:100%;background:#fff;color:var(--navy);border:1.5px solid var(--border);padding:12px;border-radius:12px;font-size:13.5px;font-weight:700;cursor:pointer;}
+
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:48px;height:48px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:24px;box-shadow:0 6px 16px rgba(245,139,31,.4);z-index:31;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+
+.sheet-overlay{position:fixed;inset:0;background:rgba(10,20,30,.4);z-index:40;display:none;}
+.sheet-overlay.open{display:block;}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:430px;margin:0 auto;background:#fff;border-radius:20px 20px 0 0;z-index:41;max-height:88vh;overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .25s ease;}
+.sheet.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:3px;margin:0 auto 14px;}
+.sheet h2{font-size:16px;color:var(--navy);margin:0 0 14px;font-weight:800;font-family:Manrope,sans-serif;}
+.sheet-opt{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:13.5px;font-weight:600;}
+.sheet-opt:last-child{border-bottom:none;}
+.sheet-opt.danger{color:var(--red);}
+
+.infobox{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.infobox b{color:var(--text);}
+.synctext{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* ===== Bottom nav (acuan sama persis dengan Dashboard Navy+Oranye) ===== */
+.bottom-nav{display:grid;grid-template-columns:repeat(4,1fr);align-items:center;position:fixed;z-index:30;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:16px;right:16px;max-width:398px;margin:0 auto;height:80px;background:#FFFFFF;border:1px solid var(--border);border-radius:30px;box-shadow:0 12px 28px rgba(10,65,116,.12);}
+.nav-item{height:100%;border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:none;}
+.nav-icon{width:26px;height:26px;display:flex;align-items:center;justify-content:center;}
+.nav-icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
+.nav-label{font-size:10px;font-weight:700;white-space:nowrap;letter-spacing:.2px;}
+.nav-item.active{color:var(--orange-d);}
+.nav-item:active .nav-icon{scale:.92;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar"><h1>Pengaturan</h1></div>
+
+  <div class="page">
+    <div class="profile-head" onclick="openSheet('editProfil')">
+      <div class="avatar">AW</div>
+      <div>
+        <div class="pname">Andi Wijaya</div>
+        <div class="prole">Owner/Admin</div>
+      </div>
+      <span class="chev">›</span>
+    </div>
+
+    <div class="group-title">Profil & Akun</div>
+    <div class="list-card">
+      <div class="list-row" onclick="openDrill('profilUsaha')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1"/></svg></div>
+        <div class="row-main"><div class="t">Profil Usaha & Akun Keamanan</div><div class="s">Nama usaha, alamat, telepon, jam operasional</div></div>
+        <span class="row-chev">›</span>
+      </div>
+    </div>
+
+    <div class="group-title">Master Data</div>
+    <div class="list-card">
+      <div class="list-row" onclick="openDrill('masterKendaraan')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-5l2-5h9l4 5h1a2 2 0 0 1 2 2v3h-2"/></svg></div>
+        <div class="row-main"><div class="t">Jenis Kendaraan & Tarif</div><div class="s">Harian Rp30.000 · Trail Rp50.000</div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <div class="list-row" onclick="openDrill('masterBahan')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8l1 4H7z"/><path d="M6 6h12l1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/></svg></div>
+        <div class="row-main"><div class="t">Daftar Bahan</div><div class="s">Obat, Sampo, Kit Body, Kit Ban</div></div>
+        <span class="row-chev">›</span>
+      </div>
+    </div>
+
+    <div class="group-title">Tampilan</div>
+    <div class="list-card">
+      <div class="list-row" style="cursor:default;" id="rowGelap">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg></div>
+        <div class="row-main"><div class="t">Mode Gelap</div></div>
+        <label class="switch"><input type="checkbox" id="swGelap"><span class="slider"></span></label>
+      </div>
+      <div class="list-row" style="cursor:default;">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16"/></svg></div>
+        <div class="row-main"><div class="t">Ikuti Tema Sistem</div></div>
+        <label class="switch"><input type="checkbox" id="swSistem" checked><span class="slider"></span></label>
+      </div>
+      <div class="list-row" onclick="openDrill('ukuranTeks')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></div>
+        <div class="row-main"><div class="t">Ukuran Teks</div><div class="s">Sedang</div></div>
+        <span class="row-chev">›</span>
+      </div>
+    </div>
+
+    <div class="group-title">Sinkron & Backup</div>
+    <div class="list-card">
+      <div class="list-row" onclick="openDrill('sinkron')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg></div>
+        <div class="row-main"><div class="t">Sinkron ke Google Sheet</div><div class="s">Terakhir sync: hari ini, 09.42</div></div>
+        <span class="row-chev">›</span>
+      </div>
+    </div>
+
+    <div class="group-title">Lainnya</div>
+    <div class="list-card">
+      <div class="list-row" onclick="openDrill('tentang')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+        <div class="row-main"><div class="t">Tentang Aplikasi</div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <div class="list-row" onclick="openDrill('kebijakan')">
+        <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 3v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6z"/></svg></div>
+        <div class="row-main"><div class="t">Kebijakan Privasi & Syarat Ketentuan</div></div>
+        <span class="row-chev">›</span>
+      </div>
+      <div class="list-row" onclick="openSheet('keluar')">
+        <div class="row-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></div>
+        <div class="row-main"><div class="t" style="color:var(--red);">Keluar</div></div>
+      </div>
+    </div>
+
+    <footer style="text-align:center;padding:16px 2px 10px;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.2px;line-height:1.6;">ChioChio Motor Wash &middot; Admin Panel v1.0<br>Data tersinkron otomatis ke Google Sheet</footer>
+  </div>
+
+  <!-- drill view (dipakai bergantian semua sub-halaman) -->
+  <div class="drill" id="drillView">
+    <div class="drill-head">
+      <button onclick="document.getElementById('drillView').classList.remove('open')"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h2 id="drillTitle">Detail</h2>
+    </div>
+    <div class="drill-body" id="drillBody"></div>
+  </div>
+
+  <div class="sheet-overlay" id="sheetOverlay"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheetTitle">Sheet</h2>
+    <div id="sheetBody"></div>
+  </div>
+
+</div>
+
+<!-- Bottom nav — acuan sama persis dengan Dashboard Navy+Oranye -->
+<nav class="bottom-nav" id="bottomNav">
+  <a class="nav-item" href="https://claude.ai/artifact/EHfvEdVmtfKk7XHVTKABqy" data-name="Dashboard">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
+    <span class="nav-label">HOME</span>
+  </a>
+  <a class="nav-item" href="https://claude.ai/artifact/EAwjvon2XP46PsmtzxaKcs" data-name="Laporan">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19V10"/><path d="M12 19V5"/><path d="M20 19v-7"/></svg></span>
+    <span class="nav-label">LAPORAN</span>
+  </a>
+  <a class="nav-item" href="https://claude.ai/artifact/KAhyHrKeaZYr85S5aL9cQ4" data-name="Dana">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
+    <span class="nav-label">DANA</span>
+  </a>
+  <a class="nav-item active" href="https://claude.ai/artifact/8P7Tgoosyqe6yaKmB7cmTf" data-name="Pengaturan">
+    <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+    <span class="nav-label">PENGATURAN</span>
+  </a>
+</nav>
+
+<script>
+const svgPencil='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const svgTrash='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
+function actionIcons(){return `<div style="display:flex;gap:8px;"><div style="width:28px;height:28px;border-radius:8px;background:#EAF1FA;color:var(--navy);display:flex;align-items:center;justify-content:center;">${svgPencil}</div><div style="width:28px;height:28px;border-radius:8px;background:#FBE4DE;color:var(--red);display:flex;align-items:center;justify-content:center;">${svgTrash}</div></div>`;}
+
+const kendaraan=[{nama:"Harian",tarif:30000},{nama:"Trail",tarif:50000}];
+const bahan=["Obat","Sampo","Kit Body","Kit Ban"];
+const kategori=["Pembelian Bahan","Keperluan Sehari-hari","Perawatan Alat","Lainnya"];
+
+function rowSimple(main,sub){return `<div class="list-row" style="cursor:default;"><div class="row-main"><div class="t">${main}</div>${sub?`<div class="s">${sub}</div>`:''}</div>${actionIcons()}</div>`;}
+
+const drills={
+  profilUsaha:{
+    title:"Profil Usaha & Akun Keamanan",
+    body:`<div class="field"><label>Nama Usaha</label><input value="ChioChio Motor Wash"></div>
+      <div class="field"><label>Alamat</label><input value="Jl. Raya Contoh No. 10"></div>
+      <div class="field"><label>Nomor Telepon</label><input value="0812-3456-7890"></div>
+      <div class="field"><label>Jam Operasional</label><input value="08.00 - 20.00"></div>
+      <div class="field"><label>Password Akun</label><input type="password" value="••••••••"></div>
+      <button class="btn-submit">Simpan Perubahan</button>`
+  },
+  masterKendaraan:{
+    title:"Jenis Kendaraan & Tarif",
+    body:`<div class="list-card">${kendaraan.map(k=>rowSimple(k.nama,"Rp "+k.tarif.toLocaleString('id-ID'))).join('')}</div>`
+  },
+  masterBahan:{
+    title:"Daftar Bahan",
+    body:`<div class="list-card">${bahan.map(b=>rowSimple(b)).join('')}</div>`
+  },
+  ukuranTeks:{
+    title:"Ukuran Teks",
+    body:`<div class="list-card">
+      <div class="list-row" onclick="pilihUkuran(this)" data-v="Kecil">Kecil</div>
+      <div class="list-row" onclick="pilihUkuran(this)" data-v="Sedang" style="color:var(--orange-d);font-weight:700;">Sedang ✓</div>
+      <div class="list-row" onclick="pilihUkuran(this)" data-v="Besar">Besar</div>
+    </div>`
+  },
+  sinkron:{
+    title:"Sinkron & Backup",
+    body:`<div class="infobox">Data yang disinkron: <b>Jenis Kendaraan & Tarif</b>, <b>Daftar Bahan</b>, <b>Profil Usaha</b>. Ini membantu memulihkan data kalau HP/browser diganti.<div class="synctext">Terakhir sync: hari ini, 09.42</div></div>
+      <button class="btn-submit">Sinkron Sekarang</button>
+      <div style="height:10px;"></div>
+      <button class="btn-outline">Backup ke Google Drive</button>`
+  },
+  tentang:{
+    title:"Tentang Aplikasi",
+    body:`<div class="infobox">ChioChio Motor Wash &middot; Admin Panel<br>Versi 1.0.0<br><br>Aplikasi pencatatan pendapatan, bahan, pengeluaran, dan dana untuk usaha pencucian motor ChioChio.</div>`
+  },
+  kebijakan:{
+    title:"Kebijakan Privasi & Syarat",
+    body:`<div class="infobox">Data yang dicatat di aplikasi ini (pendapatan, pengeluaran, dana) digunakan semata untuk kebutuhan operasional internal ChioChio Motor Wash dan tidak dibagikan ke pihak ketiga.</div>`
+  }
+};
+function openDrill(key){
+  const d=drills[key];
+  document.getElementById('drillTitle').textContent=d.title;
+  document.getElementById('drillBody').innerHTML=d.body;
+  document.getElementById('drillView').classList.add('open');
+}
+function pilihUkuran(el){
+  el.parentElement.querySelectorAll('.list-row').forEach(r=>{r.style.color='';r.style.fontWeight='';r.textContent=r.dataset.v;});
+  el.style.color='var(--orange-d)'; el.style.fontWeight='700'; el.textContent=el.dataset.v+' ✓';
+}
+document.getElementById('swGelap').onchange=function(){
+  if(this.checked) document.getElementById('swSistem').checked=false;
+};
+document.getElementById('swSistem').onchange=function(){
+  if(this.checked) document.getElementById('swGelap').checked=false;
+};
+
+const sheet=document.getElementById('sheet'), sheetOverlay=document.getElementById('sheetOverlay');
+function closeSheet(){sheet.classList.remove('open');sheetOverlay.classList.remove('open');}
+sheetOverlay.onclick=closeSheet;
+function openSheet(key){
+  if(key==='editProfil'){
+    document.getElementById('sheetTitle').textContent='Edit Profil Pengguna';
+    document.getElementById('sheetBody').innerHTML=`
+      <div style="text-align:center;margin-bottom:16px;">
+        <div class="avatar" style="width:72px;height:72px;font-size:26px;margin:0 auto 10px;">AW</div>
+        <div class="sheet-opt" style="justify-content:center;border:none;color:var(--navy);" onclick="openSheet('gantiFoto')">Ganti Foto</div>
+      </div>
+      <div class="field"><label>Nama Pengguna</label><input value="Andi Wijaya"></div>
+      <div class="field"><label>Role</label><input value="Owner/Admin" disabled></div>
+      <button class="btn-submit" onclick="closeSheet()">Simpan</button>`;
+  } else if(key==='gantiFoto'){
+    document.getElementById('sheetTitle').textContent='Ganti Foto';
+    document.getElementById('sheetBody').innerHTML=`
+      <div class="sheet-opt" onclick="closeSheet()">📷 Ambil dari Kamera</div>
+      <div class="sheet-opt" onclick="closeSheet()">🖼️ Pilih dari Galeri</div>
+      <div class="sheet-opt danger" onclick="closeSheet()">🗑️ Hapus Foto</div>`;
+  } else if(key==='keluar'){
+    document.getElementById('sheetTitle').textContent='Keluar dari Akun?';
+    document.getElementById('sheetBody').innerHTML=`
+      <p style="font-size:12.5px;color:var(--muted);margin:-6px 0 16px;">Kamu perlu login kembali untuk mengakses data ChioChio Motor Wash.</p>
+      <button class="btn-submit" style="background:var(--red);" onclick="closeSheet()">Ya, Keluar</button>
+      <div style="height:8px;"></div>
+      <button class="btn-outline" onclick="closeSheet()">Batal</button>`;
+  }
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+</script>
+</body>
+</html>

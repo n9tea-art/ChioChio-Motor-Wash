@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Login | ChioChio Motor Wash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0A4174; --navy-dark:#052642; --orange:#F7AD19; --orange-dark:#F58B1F;
+  --muted:#9FB3C8; --line:rgba(255,255,255,.16);
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+html, body{ height:100%; overflow:hidden; }
+body{
+  margin:0; height:100vh; font-family:'DM Sans',sans-serif;
+  color:#fff; background:var(--navy-dark);
+  display:flex; align-items:flex-start; justify-content:center;
+}
+.screen{ width:100%; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+.photo{
+  position:relative; height:34vh; min-height:180px; max-height:260px; flex-shrink:0;
+  background:url('/_blob/07260a444d515ced0094978901d5155c') center 22%/cover no-repeat;
+}
+.photo::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(5,38,66,.15) 0%, rgba(5,38,66,.55) 60%, var(--navy-dark) 100%);
+}
+
+.badge-wrap{ position:relative; text-align:center; margin-top:-46px; z-index:2; }
+.badge{
+  width:88px; height:88px; margin:0 auto; border-radius:50%; overflow:hidden;
+  background:var(--navy-dark); border:3px solid var(--orange);
+  display:grid; place-items:center; box-shadow:0 10px 24px rgba(0,0,0,.4);
+}
+.badge img{ width:100%; height:100%; object-fit:cover; object-position:center 30%; }
+
+.lower{
+  flex:1; min-height:0; background:var(--navy-dark); padding:0 clamp(24px, 8vw, 60px) 18px; text-align:center;
+  display:flex; flex-direction:column; justify-content:flex-start; width:100%; max-width:420px; margin:0 auto; box-sizing:border-box;
+}
+.brand{ font:800 24px Manrope,sans-serif; letter-spacing:.5px; margin:26px 0 2px; }
+.tagline{ font-size:11px; color:var(--muted); margin:0 0 50px; }
+
+.panel-title{
+  text-align:left; font:800 14px Manrope,sans-serif; letter-spacing:.3px;
+  padding-bottom:8px; margin-bottom:14px; border-bottom:2px solid var(--orange);
+}
+
+form{ text-align:left; }
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.3px; text-transform:uppercase; margin-bottom:8px; }
+.field .input-wrap{
+  position:relative; display:flex; align-items:center;
+  border-bottom:1.5px solid var(--line); padding-bottom:9px;
+  transition:border-color .2s;
+}
+.field .input-wrap:focus-within{ border-color:var(--orange); }
+.field input{
+  flex:1; min-width:0; border:none; background:transparent; outline:none;
+  font-size:14px; color:#fff; font-family:'DM Sans',sans-serif;
+}
+.field input::placeholder{ color:rgba(255,255,255,.35); }
+.toggle-pass{ background:none; border:none; cursor:pointer; color:var(--muted); display:flex; padding:2px; }
+.toggle-pass svg{ width:17px; height:17px; }
+
+.row-between{ display:flex; align-items:center; justify-content:space-between; margin:-4px 0 16px; font-size:11.5px; }
+.remember{ display:flex; align-items:center; gap:7px; color:var(--muted); }
+.remember input{ width:14px; height:14px; accent-color:var(--orange); }
+.forgot{ color:var(--orange); font-weight:700; text-decoration:none; }
+
+.btn-login{
+  width:100%; padding:13px; border:none; border-radius:30px; cursor:pointer;
+  background:linear-gradient(135deg,var(--orange) 0%, var(--orange-dark) 100%);
+  color:var(--navy-dark); font:800 14px Manrope,sans-serif; letter-spacing:.3px;
+  box-shadow:0 10px 22px rgba(245,139,31,.3); transition:transform .15s;
+}
+.btn-login:active{ transform:translateY(1px) scale(.99); }
+
+.foot-note{ margin:14px 0 0; text-align:center; font-size:10px; color:var(--muted); line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="photo"></div>
+  <div class="badge-wrap">
+    <div class="badge"><img src="/_blob/51effab8f513db1631d1c2306ed7e739" alt="ChioChio Motor Wash"></div>
+  </div>
+  <div class="lower">
+    <div class="brand">ChioChio Motor Wash</div>
+    <p class="tagline">Admin Panel &middot; Masuk untuk kelola usaha Anda</p>
+
+    <div class="panel-title">Login</div>
+
+    <form id="loginForm" onsubmit="return false;">
+      <div class="field">
+        <label for="loginEmail">Email / Username</label>
+        <div class="input-wrap">
+          <input id="loginEmail" type="text" placeholder="admin@chiochio.com" autocomplete="username">
+        </div>
+      </div>
+      <div class="field">
+        <label for="loginPass">Kata Sandi</label>
+        <div class="input-wrap">
+          <input id="loginPass" type="password" placeholder="Masukkan kata sandi" autocomplete="current-password">
+          <button type="button" class="toggle-pass" id="togglePass" aria-label="Tampilkan kata sandi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="row-between">
+        <label class="remember"><input type="checkbox"> Ingat saya</label>
+        <a href="#" class="forgot">Lupa kata sandi?</a>
+      </div>
+      <button type="submit" class="btn-login" id="btnLogin">Masuk</button>
+      <p class="foot-note">ChioChio Motor Wash &middot; Admin Panel v1.0<br>Tampilan ini masih dummy/visual, belum terhubung sistem login.</p>
+    </form>
+  </div>
+</div>
+<script>
+document.getElementById('togglePass').addEventListener('click', function(){
+  var inp = document.getElementById('loginPass');
+  var isPass = inp.type === 'password';
+  inp.type = isPass ? 'text' : 'password';
+});
+document.getElementById('btnLogin').addEventListener('click', function(){
+  this.textContent = 'Memproses...';
+  var self = this;
+  setTimeout(function(){ self.textContent = 'Masuk'; }, 900);
+});
+</script>
+</body>
+</html>
