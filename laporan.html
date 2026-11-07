@@ -72,7 +72,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .drill-head{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;}
 .drill-head button{background:none;border:none;color:var(--navy);cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;}
 .drill-head h2{font-size:15px;margin:0;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
-.drill-body{padding:16px;}
+.drill-body{padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px));}
 
 .sheet-overlay{position:fixed;inset:0;background:rgba(10,20,30,.4);z-index:40;display:none;}
 .sheet-overlay.open{display:block;}
@@ -147,7 +147,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
   <div class="drill" id="drillView">
     <div class="drill-head">
-      <button id="drillBack"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg></button>
+      <button id="drillBack" style="width:34px;height:34px;border-radius:10px;background:rgba(10,65,116,.08);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <h2 id="drillTitle">Detail</h2>
     </div>
     <div class="drill-body" id="drillBody"></div>
@@ -320,7 +320,7 @@ function detailBodyFor(t,d){
 let drillBulanIdx=0, drillMode='harian', drillPage=0;
 function renderDrillHarian(bidx){
   const hari=hariForBulan(bidx);
-  const perPage=10, totalPage=Math.ceil(hari.length/perPage);
+  const perPage=7, totalPage=Math.ceil(hari.length/perPage);
   if(drillPage>=totalPage) drillPage=totalPage-1;
   const shown=hari.slice(drillPage*perPage,(drillPage+1)*perPage);
   let pag='';
