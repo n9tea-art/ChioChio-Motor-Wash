@@ -175,19 +175,19 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <!-- Bottom nav — acuan sama persis dengan Dashboard Navy+Oranye -->
 <nav class="bottom-nav" id="bottomNav">
-  <a class="nav-item" href="https://claude.ai/artifact/EHfvEdVmtfKk7XHVTKABqy" data-name="Dashboard">
+  <a class="nav-item" href="dashboard.html" data-name="Dashboard">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
     <span class="nav-label">HOME</span>
   </a>
-  <a class="nav-item active" href="https://claude.ai/artifact/EAwjvon2XP46PsmtzxaKcs" data-name="Laporan">
+  <a class="nav-item active" href="laporan.html" data-name="Laporan">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19V10"/><path d="M12 19V5"/><path d="M20 19v-7"/></svg></span>
     <span class="nav-label">LAPORAN</span>
   </a>
-  <a class="nav-item" href="https://claude.ai/artifact/KAhyHrKeaZYr85S5aL9cQ4" data-name="Dana">
+  <a class="nav-item" href="dana.html" data-name="Dana">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
     <span class="nav-label">DANA</span>
   </a>
-  <a class="nav-item" href="https://claude.ai/artifact/8P7Tgoosyqe6yaKmB7cmTf" data-name="Pengaturan">
+  <a class="nav-item" href="pengaturan.html" data-name="Pengaturan">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
     <span class="nav-label">PENGATURAN</span>
   </a>
@@ -422,18 +422,24 @@ function openForm(type,isEdit){
       <div class="field"><label>Keterangan (opsional)</label><input type="text" id="f-pdt-ket" placeholder="cth: Cuci + semir ban"></div>
       <div id="f-pdt-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>`;
   } else if(type==='bahan'){
-    html=`<div class="field"><label>Tanggal</label><input type="date"></div>
-      <div class="field"><label>Nama Bahan</label><select>${bahanKategori.map(k=>`<option>${k}</option>`).join('')}</select></div>
-      <div class="field"><label>Jumlah Terpakai (botol)</label><input type="number" placeholder="0"></div>`;
+    html=`<div class="field"><label>Tanggal</label><input type="date" id="f-bhn-tanggal" value="${new Date().toISOString().slice(0,10)}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Nama Bahan</label><select id="f-bhn-nama">${bahanKategori.map(k=>`<option>${k}</option>`).join('')}</select></div>
+      <div class="field"><label>Jumlah Terpakai (botol)</label><input type="number" id="f-bhn-jumlah" placeholder="0"></div>
+      <div id="f-bhn-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>`;
   } else if(type==='pengeluaran'){
     html=`<div class="field"><label>ID Pengeluaran</label><input type="text" value="${genId('PNG','idctr_png')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
-      <div class="field"><label>Tanggal</label><input type="date"></div>
-      <div class="field"><label>Uraian Pengeluaran</label><input type="text" placeholder="cth: Beli sabun cuci"></div>
-      <div class="field"><label>Nominal</label><input type="number" placeholder="0"></div>
-      <div class="field"><label>Keterangan (opsional)</label><input type="text" placeholder="cth: untuk stok 1 bulan"></div>`;
+      <div class="field"><label>Tanggal</label><input type="date" id="f-png-tanggal" value="${new Date().toISOString().slice(0,10)}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Uraian Pengeluaran</label><input type="text" id="f-png-uraian" placeholder="cth: Beli sabun cuci"></div>
+      <div class="field"><label>Nominal</label><input type="number" id="f-png-nominal" placeholder="0"></div>
+      <div class="field"><label>Keterangan (opsional)</label><input type="text" id="f-png-ket" placeholder="cth: untuk stok 1 bulan"></div>
+      <div id="f-png-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>`;
   }
   if(type==='pendapatan'){
     html += `<button class="btn-submit" id="btnSimpanPendapatan" onclick="simpanPendapatanKeSheet()">Simpan</button>`;
+  } else if(type==='bahan'){
+    html += `<button class="btn-submit" id="btnSimpanBahan" onclick="simpanBahanKeSheet()">Simpan</button>`;
+  } else if(type==='pengeluaran'){
+    html += `<button class="btn-submit" id="btnSimpanPengeluaran" onclick="simpanPengeluaranKeSheet()">Simpan</button>`;
   } else {
     html += `<button class="btn-submit" onclick="closeSheet()">Simpan</button>`;
   }
@@ -445,6 +451,47 @@ function selChoice(el,v){
   el.classList.add('sel');
   if(v==='harian'){ document.getElementById('f-pdt-tarif').value='30000'; }
   if(v==='trail'){ document.getElementById('f-pdt-tarif').value='50000'; }
+}
+
+function simpanBahanKeSheet(){
+  const btn=document.getElementById('btnSimpanBahan');
+  const statusEl=document.getElementById('f-bhn-status');
+  const payload={
+    modul:'bahan',
+    namaBahan:document.getElementById('f-bhn-nama').value,
+    totalTerpakai:Number(document.getElementById('f-bhn-jumlah').value)||0
+  };
+  btn.disabled=true; btn.textContent='Menyimpan...'; statusEl.style.display='none';
+  const formBody=new URLSearchParams();
+  Object.keys(payload).forEach(k=>formBody.append(k,payload[k]));
+  fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody})
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status==='success'){ closeSheet(); }
+      else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
+    })
+    .catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
+}
+
+function simpanPengeluaranKeSheet(){
+  const btn=document.getElementById('btnSimpanPengeluaran');
+  const statusEl=document.getElementById('f-png-status');
+  const payload={
+    modul:'pengeluaran',
+    uraianPengeluaran:document.getElementById('f-png-uraian').value,
+    jumlah:Number(document.getElementById('f-png-nominal').value)||0,
+    keterangan:document.getElementById('f-png-ket').value
+  };
+  btn.disabled=true; btn.textContent='Menyimpan...'; statusEl.style.display='none';
+  const formBody=new URLSearchParams();
+  Object.keys(payload).forEach(k=>formBody.append(k,payload[k]));
+  fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody})
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status==='success'){ closeSheet(); }
+      else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
+    })
+    .catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
 }
 
 // ====================================================================

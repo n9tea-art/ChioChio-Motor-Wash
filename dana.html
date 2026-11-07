@@ -127,19 +127,19 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <!-- Bottom nav — acuan sama persis dengan Dashboard Navy+Oranye -->
 <nav class="bottom-nav" id="bottomNav">
-  <a class="nav-item" href="https://claude.ai/artifact/EHfvEdVmtfKk7XHVTKABqy" data-name="Dashboard">
+  <a class="nav-item" href="dashboard.html" data-name="Dashboard">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
     <span class="nav-label">HOME</span>
   </a>
-  <a class="nav-item" href="https://claude.ai/artifact/EAwjvon2XP46PsmtzxaKcs" data-name="Laporan">
+  <a class="nav-item" href="laporan.html" data-name="Laporan">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19V10"/><path d="M12 19V5"/><path d="M20 19v-7"/></svg></span>
     <span class="nav-label">LAPORAN</span>
   </a>
-  <a class="nav-item active" href="https://claude.ai/artifact/KAhyHrKeaZYr85S5aL9cQ4" data-name="Dana">
+  <a class="nav-item active" href="dana.html" data-name="Dana">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
     <span class="nav-label">DANA</span>
   </a>
-  <a class="nav-item" href="https://claude.ai/artifact/8P7Tgoosyqe6yaKmB7cmTf" data-name="Pengaturan">
+  <a class="nav-item" href="pengaturan.html" data-name="Pengaturan">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
     <span class="nav-label">PENGATURAN</span>
   </a>
@@ -191,29 +191,73 @@ function openForm(type){
   const titles={'dana-simpanan':'Dana Simpanan','dana-bahan':'Dana Pembelian Bahan'};
   document.getElementById('sheetTitle').textContent = 'Tambah '+titles[type];
   let html='';
+  const tglHariIni=new Date().toISOString().slice(0,10);
   if(type==='dana-simpanan'){
     html=`<div class="field"><label>ID Dana Simpanan</label><input type="text" value="${genId('DSP','idctr_dsp')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
-      <div class="field"><label>Tanggal</label><input type="date"></div>
-      <div class="field"><label>Jenis</label><div class="choice-row">
-        <div class="choice sel" onclick="selChoice(this)">Setor</div>
-        <div class="choice" onclick="selChoice(this)">Tarik</div></div></div>
-      <div class="field"><label>Keterangan</label><input type="text" placeholder="cth: Setor dari pendapatan"></div>
-      <div class="field"><label>Nominal</label><input type="number" placeholder="0"></div>`;
+      <div class="field"><label>Tanggal</label><input type="date" id="f-dsp-tanggal" value="${tglHariIni}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Jenis</label><div class="choice-row" id="f-dsp-jenisRow">
+        <div class="choice sel" data-jenis="Setor" onclick="selChoice(this)">Setor</div>
+        <div class="choice" data-jenis="Tarik" onclick="selChoice(this)">Tarik</div></div></div>
+      <div class="field"><label>Keterangan</label><input type="text" id="f-dsp-ket" placeholder="cth: Setor dari pendapatan"></div>
+      <div class="field"><label>Nominal</label><input type="number" id="f-dsp-nominal" placeholder="0"></div>
+      <div id="f-dsp-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+      <button class="btn-submit" id="btnSimpanDSP" onclick="simpanDanaSimpananKeSheet()">Simpan</button>`;
   } else {
     html=`<div class="field"><label>ID Dana Pembelian Bahan</label><input type="text" value="${genId('DPB','idctr_dpb')}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
-      <div class="field"><label>Tanggal</label><input type="date"></div>
-      <div class="field"><label>Jenis</label><div class="choice-row">
-        <div class="choice sel" onclick="selChoice(this)">Setor</div>
-        <div class="choice" onclick="selChoice(this)">Pakai</div></div></div>
-      <div class="field"><label>Keterangan</label><input type="text" placeholder="cth: Beli sabun cuci"></div>
-      <div class="field"><label>Nominal</label><input type="number" placeholder="0"></div>`;
+      <div class="field"><label>Tanggal</label><input type="date" id="f-dpb-tanggal" value="${tglHariIni}" readonly style="color:rgba(0,0,0,.45);font-weight:500;"></div>
+      <div class="field"><label>Jenis</label><div class="choice-row" id="f-dpb-jenisRow">
+        <div class="choice sel" data-jenis="Setor" onclick="selChoice(this)">Setor</div>
+        <div class="choice" data-jenis="Pakai" onclick="selChoice(this)">Pakai</div></div></div>
+      <div class="field"><label>Keterangan</label><input type="text" id="f-dpb-ket" placeholder="cth: Beli sabun cuci"></div>
+      <div class="field"><label>Nominal</label><input type="number" id="f-dpb-nominal" placeholder="0"></div>
+      <div id="f-dpb-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+      <button class="btn-submit" id="btnSimpanDPB" onclick="simpanDanaPembelianBahanKeSheet()">Simpan</button>`;
   }
-  html += `<button class="btn-submit" onclick="closeSheet()">Simpan</button>`;
   document.getElementById('sheetBody').innerHTML=html;
   sheet.classList.add('open'); sheetOverlay.classList.add('open');
 }
 function selChoice(el){ el.parentElement.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 document.getElementById('fabBtn').onclick=()=>{ openForm(danaTab==='simpanan'?'dana-simpanan':'dana-bahan'); };
+
+// ====================================================================
+// Sambungan ke Apps Script — Dana Simpanan & Dana Pembelian Bahan
+// ====================================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
+
+function kirimKeSheet(payload, btn, statusEl){
+  btn.disabled=true; btn.textContent='Menyimpan...'; statusEl.style.display='none';
+  const formBody=new URLSearchParams();
+  Object.keys(payload).forEach(k=>formBody.append(k,payload[k]));
+  return fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody})
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status==='success'){ closeSheet(); }
+      else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
+    })
+    .catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
+}
+
+function simpanDanaSimpananKeSheet(){
+  const jenisEl=document.querySelector('#f-dsp-jenisRow .choice.sel');
+  const payload={
+    modul:'danasimpanan',
+    jenisTransaksi:jenisEl?jenisEl.dataset.jenis:'',
+    jumlah:Number(document.getElementById('f-dsp-nominal').value)||0,
+    keterangan:document.getElementById('f-dsp-ket').value
+  };
+  kirimKeSheet(payload, document.getElementById('btnSimpanDSP'), document.getElementById('f-dsp-status'));
+}
+
+function simpanDanaPembelianBahanKeSheet(){
+  const jenisEl=document.querySelector('#f-dpb-jenisRow .choice.sel');
+  const payload={
+    modul:'danapembelianbahan',
+    jenisTransaksi:jenisEl?jenisEl.dataset.jenis:'',
+    jumlah:Number(document.getElementById('f-dpb-nominal').value)||0,
+    keterangan:document.getElementById('f-dpb-ket').value
+  };
+  kirimKeSheet(payload, document.getElementById('btnSimpanDPB'), document.getElementById('f-dpb-status'));
+}
 
 renderDanaList();
 </script>
