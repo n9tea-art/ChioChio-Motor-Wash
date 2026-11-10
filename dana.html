@@ -47,6 +47,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .list-row .l-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
 .list-row .l-val{font-size:12.5px;font-weight:700;}
 .seemore{text-align:center;padding:11px;font-size:12px;font-weight:700;color:var(--navy);cursor:pointer;border-top:1px solid var(--border);}
+.state-loading{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;}
 
 .drill{position:fixed;inset:0;background:var(--bg);z-index:30;display:none;max-width:430px;margin:0 auto;overflow-y:auto;}
 .drill.open{display:block;}
@@ -98,11 +99,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
     <div class="saldo-card">
       <div class="lbl" id="saldoLabel">Saldo Dana Simpanan</div>
-      <div class="val" id="saldoVal">Rp 3.250.000</div>
+      <div class="val" id="saldoVal">Rp 0</div>
     </div>
 
     <div class="section-title">Riwayat</div>
-    <div class="list-card" id="danaList"></div>
+    <div class="list-card" id="danaList"><div class="state-loading">Memuat data...</div></div>
     <footer style="text-align:center;padding:16px 2px 10px;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.2px;line-height:1.6;">ChioChio Motor Wash &middot; Admin Panel v1.0<br>Data tersinkron otomatis ke Google Sheet</footer>
   </div>
 
@@ -146,26 +147,83 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </nav>
 
 <script>
-const danaSimpanan=[{label:"Setor dari pendapatan",tgl:"28 Okt 2026",nilai:"+Rp 500.000"},{label:"Servis kompresor",tgl:"20 Okt 2026",nilai:"-Rp 350.000"},{label:"Setor dari pendapatan",tgl:"15 Okt 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"8 Okt 2026",nilai:"+Rp 500.000"},{label:"Beli spare part",tgl:"3 Okt 2026",nilai:"-Rp 180.000"},{label:"Setor dari pendapatan",tgl:"28 Sep 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"21 Sep 2026",nilai:"+Rp 500.000"},{label:"Ganti oli kompresor",tgl:"14 Sep 2026",nilai:"-Rp 220.000"},{label:"Setor dari pendapatan",tgl:"7 Sep 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"31 Agu 2026",nilai:"+Rp 500.000"},{label:"Beli selang air",tgl:"24 Agu 2026",nilai:"-Rp 150.000"},{label:"Setor dari pendapatan",tgl:"17 Agu 2026",nilai:"+Rp 500.000"},{label:"Setor dari pendapatan",tgl:"10 Agu 2026",nilai:"+Rp 500.000"},{label:"Servis alat vacuum",tgl:"3 Agu 2026",nilai:"-Rp 275.000"}];
-const danaBahan=[{label:"Beli sabun cuci",tgl:"27 Okt 2026",nilai:"-Rp 420.000"},{label:"Setor alokasi bulanan",tgl:"1 Okt 2026",nilai:"+Rp 1.500.000"},{label:"Beli kit body",tgl:"24 Sep 2026",nilai:"-Rp 280.000"},{label:"Beli kit ban",tgl:"18 Sep 2026",nilai:"-Rp 210.000"},{label:"Setor alokasi bulanan",tgl:"1 Sep 2026",nilai:"+Rp 1.500.000"},{label:"Beli obat cuci",tgl:"22 Agu 2026",nilai:"-Rp 350.000"},{label:"Beli sampo motor",tgl:"15 Agu 2026",nilai:"-Rp 300.000"},{label:"Setor alokasi bulanan",tgl:"1 Agu 2026",nilai:"+Rp 1.500.000"},{label:"Beli kit body",tgl:"25 Jul 2026",nilai:"-Rp 280.000"},{label:"Beli obat cuci",tgl:"18 Jul 2026",nilai:"-Rp 350.000"},{label:"Setor alokasi bulanan",tgl:"1 Jul 2026",nilai:"+Rp 1.500.000"}];
+function fmtRp(n){ const sign = n<0?'-':''; return sign+"Rp "+Math.abs(n).toLocaleString("id-ID"); }
+function fmtTgl(dmy){
+  // dmy format "dd/MM/yyyy" dari Sheet -> "d MMM yyyy"
+  const bln=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
+  const p=String(dmy).split('/');
+  if(p.length<3) return dmy;
+  return `${parseInt(p[0],10)} ${bln[parseInt(p[1],10)-1]} ${p[2]}`;
+}
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
 
 let danaTab='simpanan';
+let dataSimpanan=null, dataBahan=null; // {rows:[{label,tgl,nilai,arah}], saldo:number} setelah diolah
+let loadError=null;
+
+// ====================================================================
+// Ambil data mentah Dana Simpanan & Dana Pembelian Bahan SEKALIGUS (parallel),
+// lalu olah jadi baris siap tampil + saldo akumulasi di client.
+// Saldo MURNI dari akumulasi baris Setor/Tarik(Pakai) yang ada di Sheet (mulai dari 0),
+// tidak disinkronkan otomatis ke modul lain (Pendapatan/Pengeluaran).
+// ====================================================================
+function olahDana(rows, jenisKurang){
+  // rows terurut dari Sheet biasanya lama->baru (baris ditambah di bawah); urutkan tampilan baru->lama
+  let saldo=0;
+  const withSaldo = rows.map(r=>{
+    const jenis = r['Jenis Transaksi']||'';
+    const nominal = Number(r['Jumlah'])||0;
+    const arah = jenis===jenisKurang ? -1 : 1;
+    saldo += arah*nominal;
+    return { label:(r['Keterangan']&&r['Keterangan'].trim()) || jenis, tgl:fmtTgl(r['Tanggal']), nilai:(arah>0?'+':'-')+'Rp '+nominal.toLocaleString('id-ID') };
+  });
+  withSaldo.reverse(); // tampilkan baru->lama
+  return { rows: withSaldo, saldo };
+}
+
+function loadDanaSemua(){
+  document.getElementById('danaList').innerHTML = '<div class="state-loading">Memuat data...</div>';
+  return Promise.all([
+    fetch(`${APPS_SCRIPT_URL}?modul=danasimpanan`).then(r=>r.json()),
+    fetch(`${APPS_SCRIPT_URL}?modul=danapembelianbahan`).then(r=>r.json())
+  ]).then(([resSimpanan, resBahan])=>{
+    if(resSimpanan.status!=='success') throw new Error(resSimpanan.message||'Gagal memuat Dana Simpanan');
+    if(resBahan.status!=='success') throw new Error(resBahan.message||'Gagal memuat Dana Pembelian Bahan');
+    dataSimpanan = olahDana(resSimpanan.data, 'Tarik');
+    dataBahan = olahDana(resBahan.data, 'Pakai');
+    loadError=null;
+  }).catch(err=>{
+    loadError=err.message;
+  });
+}
+
 function rowHtml(d){ return `<div class="list-row"><div><div class="l-main">${d.label}</div><div class="l-sub">${d.tgl}</div></div><div class="l-val" style="color:${d.nilai[0]==='+'?'var(--green)':'var(--red)'}">${d.nilai}</div></div>`; }
+
 function openDanaFull(){
-  const data = danaTab==='simpanan'?danaSimpanan:danaBahan;
+  const d = danaTab==='simpanan'?dataSimpanan:dataBahan;
   document.getElementById('drillTitle').textContent = danaTab==='simpanan' ? 'Seluruh Riwayat Dana Simpanan' : 'Seluruh Riwayat Dana Pembelian Bahan';
-  document.getElementById('drillBody').innerHTML = `<div class="list-card">${data.map(rowHtml).join('')}</div>`;
+  document.getElementById('drillBody').innerHTML = `<div class="list-card">${d.rows.map(rowHtml).join('') || '<div class="list-row"><div class="l-main" style="color:var(--muted);">Belum ada data</div></div>'}</div>`;
   document.getElementById('drillView').classList.add('open');
 }
+
 function renderDanaList(){
-  const data = danaTab==='simpanan'?danaSimpanan:danaBahan;
-  const shown = data.slice(0,10);
-  let html = shown.map(rowHtml).join('');
-  if(data.length>10) html += `<div class="seemore" onclick="openDanaFull()">Lihat semua ↗</div>`;
+  if(loadError){
+    document.getElementById('danaList').innerHTML = `<div class="state-loading" style="color:var(--red);">Gagal memuat data: ${loadError}</div>`;
+    document.getElementById('saldoVal').textContent = 'Rp 0';
+    document.getElementById('saldoLabel').textContent = danaTab==='simpanan'?'Saldo Dana Simpanan':'Saldo Dana Pembelian Bahan';
+    return;
+  }
+  const d = danaTab==='simpanan'?dataSimpanan:dataBahan;
+  if(!d){ document.getElementById('danaList').innerHTML = '<div class="state-loading">Memuat data...</div>'; return; }
+  const shown = d.rows.slice(0,10);
+  let html = shown.map(rowHtml).join('') || '<div class="list-row"><div class="l-main" style="color:var(--muted);">Belum ada data</div></div>';
+  if(d.rows.length>10) html += `<div class="seemore" onclick="openDanaFull()">Lihat semua ↗</div>`;
   document.getElementById('danaList').innerHTML = html;
   document.getElementById('saldoLabel').textContent = danaTab==='simpanan'?'Saldo Dana Simpanan':'Saldo Dana Pembelian Bahan';
-  document.getElementById('saldoVal').textContent = danaTab==='simpanan'?'Rp 3.250.000':'Rp 1.080.000';
+  document.getElementById('saldoVal').textContent = fmtRp(d.saldo);
 }
+
 document.querySelectorAll('#danaTabs .tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('#danaTabs .tab').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');
@@ -219,11 +277,6 @@ function openForm(type){
 function selChoice(el){ el.parentElement.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
 document.getElementById('fabBtn').onclick=()=>{ openForm(danaTab==='simpanan'?'dana-simpanan':'dana-bahan'); };
 
-// ====================================================================
-// Sambungan ke Apps Script — Dana Simpanan & Dana Pembelian Bahan
-// ====================================================================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
-
 function kirimKeSheet(payload, btn, statusEl){
   btn.disabled=true; btn.textContent='Menyimpan...'; statusEl.style.display='none';
   const formBody=new URLSearchParams();
@@ -231,7 +284,7 @@ function kirimKeSheet(payload, btn, statusEl){
   return fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody})
     .then(res=>res.json())
     .then(res=>{
-      if(res.status==='success'){ closeSheet(); }
+      if(res.status==='success'){ closeSheet(); loadDanaSemua().then(renderDanaList); }
       else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
     })
     .catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
@@ -259,7 +312,7 @@ function simpanDanaPembelianBahanKeSheet(){
   kirimKeSheet(payload, document.getElementById('btnSimpanDPB'), document.getElementById('f-dpb-status'));
 }
 
-renderDanaList();
+loadDanaSemua().then(renderDanaList);
 </script>
 </body>
 </html>

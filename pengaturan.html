@@ -12,6 +12,7 @@
   --orange:#F7AD19; --orange-d:#F58B1F;
   --bg:#F3F5F8; --card:#FFFFFF; --border:#E6EAF0;
   --text:#1E293B; --muted:#64748B; --red:#D94A2B;
+  --badge-red:#FBE4DE;
   --radius:18px;
   color-scheme:light; box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
@@ -41,11 +42,12 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .list-row:last-child{border-bottom:none;}
 .row-icon{width:34px;height:34px;border-radius:10px;background:#EAF1F8;color:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .row-icon svg{width:17px;height:17px;}
-.row-icon.red{background:var(--badge-red,#FBE4DE);color:var(--red);}
+.row-icon.red{background:var(--badge-red);color:var(--red);}
 .row-main{flex:1;}
 .row-main .t{font-size:13.5px;font-weight:600;}
 .row-main .s{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
 .row-chev{color:var(--muted);flex-shrink:0;}
+.state-loading{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;}
 
 .switch{position:relative;width:42px;height:24px;flex-shrink:0;}
 .switch input{opacity:0;width:0;height:0;}
@@ -113,7 +115,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
     <div class="group-title">Profil & Akun</div>
     <div class="list-card">
-      <div class="list-row" onclick="openDrill('profilUsaha')">
+      <div class="list-row" onclick="openDrillProfilUsaha()">
         <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M9 9h1M9 13h1M14 9h1M14 13h1"/></svg></div>
         <div class="row-main"><div class="t">Profil Usaha & Akun Keamanan</div><div class="s">Nama usaha, alamat, telepon, jam operasional</div></div>
         <span class="row-chev">›</span>
@@ -122,14 +124,14 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
     <div class="group-title">Master Data</div>
     <div class="list-card">
-      <div class="list-row" onclick="openDrill('masterKendaraan')">
+      <div class="list-row" onclick="openDrillMasterKendaraan()">
         <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3v-5l2-5h9l4 5h1a2 2 0 0 1 2 2v3h-2"/></svg></div>
-        <div class="row-main"><div class="t">Jenis Kendaraan & Tarif</div><div class="s">Harian Rp30.000 · Trail Rp50.000</div></div>
+        <div class="row-main"><div class="t">Jenis Kendaraan & Tarif</div><div class="s" id="ringkasKendaraan">Memuat...</div></div>
         <span class="row-chev">›</span>
       </div>
-      <div class="list-row" onclick="openDrill('masterBahan')">
+      <div class="list-row" onclick="openDrillMasterBahan()">
         <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2h8l1 4H7z"/><path d="M6 6h12l1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/></svg></div>
-        <div class="row-main"><div class="t">Daftar Bahan</div><div class="s">Obat, Sampo, Kit Body, Kit Ban</div></div>
+        <div class="row-main"><div class="t">Daftar Bahan</div><div class="s" id="ringkasBahan">Memuat...</div></div>
         <span class="row-chev">›</span>
       </div>
     </div>
@@ -157,7 +159,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div class="list-card">
       <div class="list-row" onclick="openDrill('sinkron')">
         <div class="row-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg></div>
-        <div class="row-main"><div class="t">Sinkron ke Google Sheet</div><div class="s">Terakhir sync: hari ini, 09.42</div></div>
+        <div class="row-main"><div class="t">Sinkron ke Google Sheet</div><div class="s">Data Master Data & Profil Usaha langsung baca dari Sheet tiap dibuka</div></div>
         <span class="row-chev">›</span>
       </div>
     </div>
@@ -192,6 +194,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div class="drill-body" id="drillBody"></div>
   </div>
 
+  <button class="fab" id="fabBtn" style="display:none;">+</button>
+
   <div class="sheet-overlay" id="sheetOverlay"></div>
   <div class="sheet" id="sheet">
     <div class="sheet-handle"></div>
@@ -203,53 +207,177 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 <!-- Bottom nav — acuan sama persis dengan Dashboard Navy+Oranye -->
 <nav class="bottom-nav" id="bottomNav">
-  <a class="nav-item" href="https://claude.ai/artifact/EHfvEdVmtfKk7XHVTKABqy" data-name="Dashboard">
+  <a class="nav-item" href="dashboard.html" data-name="Dashboard">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
     <span class="nav-label">HOME</span>
   </a>
-  <a class="nav-item" href="https://claude.ai/artifact/EAwjvon2XP46PsmtzxaKcs" data-name="Laporan">
+  <a class="nav-item" href="laporan.html" data-name="Laporan">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 19V10"/><path d="M12 19V5"/><path d="M20 19v-7"/></svg></span>
     <span class="nav-label">LAPORAN</span>
   </a>
-  <a class="nav-item" href="https://claude.ai/artifact/KAhyHrKeaZYr85S5aL9cQ4" data-name="Dana">
+  <a class="nav-item" href="dana.html" data-name="Dana">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span>
     <span class="nav-label">DANA</span>
   </a>
-  <a class="nav-item active" href="https://claude.ai/artifact/8P7Tgoosyqe6yaKmB7cmTf" data-name="Pengaturan">
+  <a class="nav-item active" href="pengaturan.html" data-name="Pengaturan">
     <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
     <span class="nav-label">PENGATURAN</span>
   </a>
 </nav>
 
 <script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
+function fmtRp(n){ return "Rp "+(n||0).toLocaleString("id-ID"); }
+
 const svgPencil='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-const svgTrash='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
-function actionIcons(){return `<div style="display:flex;gap:8px;"><div style="width:28px;height:28px;border-radius:8px;background:#EAF1FA;color:var(--navy);display:flex;align-items:center;justify-content:center;">${svgPencil}</div><div style="width:28px;height:28px;border-radius:8px;background:#FBE4DE;color:var(--red);display:flex;align-items:center;justify-content:center;">${svgTrash}</div></div>`;}
+function actionEdit(onclickAttr){return `<div onclick="${onclickAttr}" style="width:28px;height:28px;border-radius:8px;background:#EAF1FA;color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;">${svgPencil}</div>`;}
 
-const kendaraan=[{nama:"Harian",tarif:30000},{nama:"Trail",tarif:50000}];
-const bahan=["Obat","Sampo","Kit Body","Kit Ban"];
-const kategori=["Pembelian Bahan","Keperluan Sehari-hari","Perawatan Alat","Lainnya"];
+// ====================================================================
+// State Pengaturan — diambil sekali via GET modul=pengaturan (gabungan
+// Jenis Kendaraan & Tarif + Daftar Bahan + Profil Usaha dalam 1 panggilan)
+// ====================================================================
+let pengaturanData=null; // {jenisKendaraan:[{jenis,tarif}], bahan:[...], profilUsaha:{...}}
+let pengaturanError=null;
 
-function rowSimple(main,sub){return `<div class="list-row" style="cursor:default;"><div class="row-main"><div class="t">${main}</div>${sub?`<div class="s">${sub}</div>`:''}</div>${actionIcons()}</div>`;}
+function loadPengaturan(){
+  return fetch(`${APPS_SCRIPT_URL}?modul=pengaturan`).then(r=>r.json()).then(res=>{
+    if(res.status!=='success') throw new Error(res.message||'Gagal memuat Pengaturan');
+    pengaturanData = res;
+    pengaturanError=null;
+    renderRingkasan();
+  }).catch(err=>{
+    pengaturanError=err.message;
+    document.getElementById('ringkasKendaraan').textContent='Gagal memuat';
+    document.getElementById('ringkasBahan').textContent='Gagal memuat';
+  });
+}
+function renderRingkasan(){
+  const k=pengaturanData.jenisKendaraan||[];
+  const b=pengaturanData.bahan||[];
+  document.getElementById('ringkasKendaraan').textContent = k.length ? k.map(x=>x.jenis+' '+fmtRp(x.tarif)).join(' · ') : 'Belum ada data';
+  document.getElementById('ringkasBahan').textContent = b.length ? b.join(', ') : 'Belum ada data';
+}
 
+function rowKendaraan(k,i){
+  return `<div class="list-row" style="cursor:default;"><div class="row-main"><div class="t">${k.jenis}</div><div class="s">${fmtRp(k.tarif)}</div></div>${actionEdit(`openEditKendaraan(${i})`)}</div>`;
+}
+function rowBahan(nama,i){
+  return `<div class="list-row" style="cursor:default;"><div class="row-main"><div class="t">${nama}</div></div>${actionEdit(`openEditBahan(${i})`)}</div>`;
+}
+
+function openDrillMasterKendaraan(){
+  document.getElementById('drillTitle').textContent='Jenis Kendaraan & Tarif';
+  document.getElementById('drillBody').innerHTML = pengaturanError
+    ? `<div class="state-loading" style="color:var(--red);">Gagal memuat data: ${pengaturanError}</div>`
+    : `<div class="list-card">${(pengaturanData.jenisKendaraan||[]).map(rowKendaraan).join('') || '<div class="list-row" style="cursor:default;"><div class="t" style="color:var(--muted);">Belum ada data</div></div>'}</div>`;
+  document.getElementById('drillView').classList.add('open');
+  document.getElementById('fabBtn').style.display='flex';
+  document.getElementById('fabBtn').onclick=()=>openFormTambahKendaraan();
+}
+function openDrillMasterBahan(){
+  document.getElementById('drillTitle').textContent='Daftar Bahan';
+  document.getElementById('drillBody').innerHTML = pengaturanError
+    ? `<div class="state-loading" style="color:var(--red);">Gagal memuat data: ${pengaturanError}</div>`
+    : `<div class="list-card">${(pengaturanData.bahan||[]).map(rowBahan).join('') || '<div class="list-row" style="cursor:default;"><div class="t" style="color:var(--muted);">Belum ada data</div></div>'}</div>`;
+  document.getElementById('drillView').classList.add('open');
+  document.getElementById('fabBtn').style.display='flex';
+  document.getElementById('fabBtn').onclick=()=>openFormTambahBahan();
+}
+function openDrillProfilUsaha(){
+  document.getElementById('fabBtn').style.display='none';
+  document.getElementById('drillTitle').textContent='Profil Usaha & Akun Keamanan';
+  const p = (pengaturanData&&pengaturanData.profilUsaha) || {};
+  document.getElementById('drillBody').innerHTML = pengaturanError
+    ? `<div class="state-loading" style="color:var(--red);">Gagal memuat data: ${pengaturanError}</div>`
+    : `<div class="field"><label>Nama Usaha</label><input id="f-pu-nama" value="${p.namaUsaha||''}"></div>
+      <div class="field"><label>Alamat</label><input id="f-pu-alamat" value="${p.alamat||''}"></div>
+      <div class="field"><label>Nomor Telepon</label><input id="f-pu-telepon" value="${p.telepon||''}"></div>
+      <div class="field"><label>Jam Operasional</label><input id="f-pu-jam" value="${p.jamOperasional||''}"></div>
+      <div class="field"><label>Password Akun</label><input type="password" value="••••••••" disabled></div>
+      <div id="f-pu-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+      <button class="btn-submit" id="btnSimpanProfil" onclick="simpanProfilUsaha()">Simpan Perubahan</button>`;
+  document.getElementById('drillView').classList.add('open');
+}
+function simpanProfilUsaha(){
+  const btn=document.getElementById('btnSimpanProfil'), statusEl=document.getElementById('f-pu-status');
+  const payload={
+    modul:'pengaturan', aksi:'updateProfilUsaha',
+    namaUsaha:document.getElementById('f-pu-nama').value,
+    alamat:document.getElementById('f-pu-alamat').value,
+    telepon:document.getElementById('f-pu-telepon').value,
+    jamOperasional:document.getElementById('f-pu-jam').value
+  };
+  kirimPengaturan(payload, btn, statusEl, ()=>{ document.getElementById('drillView').classList.remove('open'); });
+}
+
+function kirimPengaturan(payload, btn, statusEl, onSuccess){
+  btn.disabled=true; btn.textContent='Menyimpan...'; statusEl.style.display='none';
+  const formBody=new URLSearchParams();
+  Object.keys(payload).forEach(k=>formBody.append(k,payload[k]));
+  fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody}).then(res=>res.json()).then(res=>{
+    if(res.status==='success'){ loadPengaturan().then(onSuccess); }
+    else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
+  }).catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
+}
+
+// --- Tambah/Edit Jenis Kendaraan & Tarif ---
+function openFormTambahKendaraan(){
+  document.getElementById('sheetTitle').textContent='Tambah Jenis Kendaraan';
+  document.getElementById('sheetBody').innerHTML=`
+    <div class="field"><label>Nama Jenis</label><input id="f-jk-nama" placeholder="cth: Mingguan"></div>
+    <div class="field"><label>Tarif</label><input id="f-jk-tarif" type="number" placeholder="0"></div>
+    <div id="f-jk-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+    <button class="btn-submit" id="btnJK" onclick="simpanTambahKendaraan()">Simpan</button>`;
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+function simpanTambahKendaraan(){
+  const payload={ modul:'pengaturan', aksi:'tambahJenisKendaraan', jenis:document.getElementById('f-jk-nama').value, tarif:Number(document.getElementById('f-jk-tarif').value)||0 };
+  kirimPengaturan(payload, document.getElementById('btnJK'), document.getElementById('f-jk-status'), ()=>{ closeSheet(); openDrillMasterKendaraan(); });
+}
+function openEditKendaraan(i){
+  const k=pengaturanData.jenisKendaraan[i];
+  document.getElementById('sheetTitle').textContent='Edit Jenis Kendaraan';
+  document.getElementById('sheetBody').innerHTML=`
+    <div class="field"><label>Nama Jenis</label><input id="f-ek-nama" value="${k.jenis}"></div>
+    <div class="field"><label>Tarif</label><input id="f-ek-tarif" type="number" value="${k.tarif}"></div>
+    <div id="f-ek-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+    <button class="btn-submit" id="btnEK" onclick="simpanEditKendaraan('${k.jenis.replace(/'/g,"\\'")}')">Simpan</button>`;
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+function simpanEditKendaraan(namaLama){
+  const payload={ modul:'pengaturan', aksi:'editJenisKendaraan', namaLama:namaLama, namaBaru:document.getElementById('f-ek-nama').value, tarifBaru:Number(document.getElementById('f-ek-tarif').value)||0 };
+  kirimPengaturan(payload, document.getElementById('btnEK'), document.getElementById('f-ek-status'), ()=>{ closeSheet(); openDrillMasterKendaraan(); });
+}
+
+// --- Tambah/Edit Bahan ---
+function openFormTambahBahan(){
+  document.getElementById('sheetTitle').textContent='Tambah Bahan';
+  document.getElementById('sheetBody').innerHTML=`
+    <div class="field"><label>Nama Bahan</label><input id="f-tb-nama" placeholder="cth: Semir Ban"></div>
+    <div id="f-tb-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+    <button class="btn-submit" id="btnTB" onclick="simpanTambahBahan()">Simpan</button>`;
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+function simpanTambahBahan(){
+  const payload={ modul:'pengaturan', aksi:'tambahBahan', namaBahan:document.getElementById('f-tb-nama').value };
+  kirimPengaturan(payload, document.getElementById('btnTB'), document.getElementById('f-tb-status'), ()=>{ closeSheet(); openDrillMasterBahan(); });
+}
+function openEditBahan(i){
+  const nama=pengaturanData.bahan[i];
+  document.getElementById('sheetTitle').textContent='Edit Bahan';
+  document.getElementById('sheetBody').innerHTML=`
+    <div class="field"><label>Nama Bahan</label><input id="f-eb-nama" value="${nama}"></div>
+    <div id="f-eb-status" style="font-size:12.5px;color:var(--muted);margin:-6px 0 10px;display:none;"></div>
+    <button class="btn-submit" id="btnEB" onclick="simpanEditBahan('${nama.replace(/'/g,"\\'")}')">Simpan</button>`;
+  sheet.classList.add('open'); sheetOverlay.classList.add('open');
+}
+function simpanEditBahan(namaLama){
+  const payload={ modul:'pengaturan', aksi:'editBahan', namaLama:namaLama, namaBaru:document.getElementById('f-eb-nama').value };
+  kirimPengaturan(payload, document.getElementById('btnEB'), document.getElementById('f-eb-status'), ()=>{ closeSheet(); openDrillMasterBahan(); });
+}
+
+// --- Bagian non-Sheet (Tampilan, Sinkron, Tentang, Kebijakan) tetap sama seperti sebelumnya ---
 const drills={
-  profilUsaha:{
-    title:"Profil Usaha & Akun Keamanan",
-    body:`<div class="field"><label>Nama Usaha</label><input value="ChioChio Motor Wash"></div>
-      <div class="field"><label>Alamat</label><input value="Jl. Raya Contoh No. 10"></div>
-      <div class="field"><label>Nomor Telepon</label><input value="0812-3456-7890"></div>
-      <div class="field"><label>Jam Operasional</label><input value="08.00 - 20.00"></div>
-      <div class="field"><label>Password Akun</label><input type="password" value="••••••••"></div>
-      <button class="btn-submit">Simpan Perubahan</button>`
-  },
-  masterKendaraan:{
-    title:"Jenis Kendaraan & Tarif",
-    body:`<div class="list-card">${kendaraan.map(k=>rowSimple(k.nama,"Rp "+k.tarif.toLocaleString('id-ID'))).join('')}</div>`
-  },
-  masterBahan:{
-    title:"Daftar Bahan",
-    body:`<div class="list-card">${bahan.map(b=>rowSimple(b)).join('')}</div>`
-  },
   ukuranTeks:{
     title:"Ukuran Teks",
     body:`<div class="list-card">
@@ -260,9 +388,7 @@ const drills={
   },
   sinkron:{
     title:"Sinkron & Backup",
-    body:`<div class="infobox">Data yang disinkron: <b>Jenis Kendaraan & Tarif</b>, <b>Daftar Bahan</b>, <b>Profil Usaha</b>. Ini membantu memulihkan data kalau HP/browser diganti.<div class="synctext">Terakhir sync: hari ini, 09.42</div></div>
-      <button class="btn-submit">Sinkron Sekarang</button>
-      <div style="height:10px;"></div>
+    body:`<div class="infobox">Data <b>Jenis Kendaraan & Tarif</b>, <b>Daftar Bahan</b>, dan <b>Profil Usaha</b> sekarang dibaca LANGSUNG dari Google Sheet tiap halaman Pengaturan dibuka — tidak perlu tombol sinkron manual lagi, selalu otomatis up-to-date.</div>
       <button class="btn-outline">Backup ke Google Drive</button>`
   },
   tentang:{
@@ -275,6 +401,7 @@ const drills={
   }
 };
 function openDrill(key){
+  document.getElementById('fabBtn').style.display='none';
   const d=drills[key];
   document.getElementById('drillTitle').textContent=d.title;
   document.getElementById('drillBody').innerHTML=d.body;
@@ -321,6 +448,8 @@ function openSheet(key){
   }
   sheet.classList.add('open'); sheetOverlay.classList.add('open');
 }
+
+loadPengaturan();
 </script>
 </body>
 </html>
