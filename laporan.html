@@ -29,7 +29,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .topbar h1{font-size:17px;margin:0 0 2px;color:var(--navy);font-weight:800;font-family:Manrope,sans-serif;}
 .topbar p{margin:0;font-size:12px;color:var(--muted);}
 
-.page{padding:14px 16px 110px;flex:1;}
+.page{padding:14px 16px 110px;flex:1;display:flex;flex-direction:column;}
+.page-spacer{flex:1 0 auto;}
 
 .filterbar{display:flex;gap:8px;margin-bottom:14px;}
 .filterbar select{flex:1;padding:9px 10px;border-radius:10px;border:1px solid var(--border);background:var(--card);font-size:13px;color:var(--text);}
@@ -105,6 +106,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .cbtn-cancel{background:#F0F4F8;color:var(--text);}
 .cbtn-del{background:#D94A2B;color:#fff;}
 
+.state-loading{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px;font-weight:600;}
+
 /* ===== Bottom nav (acuan sama persis dengan Dashboard Navy+Oranye) ===== */
 .bottom-nav{display:grid;grid-template-columns:repeat(4,1fr);align-items:center;position:fixed;z-index:30;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:16px;right:16px;max-width:398px;margin:0 auto;height:80px;background:#FFFFFF;border:1px solid var(--border);border-radius:30px;box-shadow:0 12px 28px rgba(10,65,116,.12);}
 .nav-item{height:100%;border:none;background:transparent;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:none;}
@@ -139,7 +142,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
     <div id="laporanSummary"></div>
 
     <div class="section-title" id="breakdownTitle">Breakdown per Bulan</div>
-    <div class="list-card" id="laporanList"></div>
+    <div class="list-card" id="laporanList"><div class="state-loading">Memuat data...</div></div>
+    <div class="page-spacer"></div>
     <footer style="text-align:center;padding:16px 2px 10px;color:var(--muted);font-size:12.5px;font-weight:600;letter-spacing:.2px;line-height:1.6;">ChioChio Motor Wash &middot; Admin Panel v1.0<br>Data tersinkron otomatis ke Google Sheet</footer>
   </div>
 
@@ -194,37 +198,125 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 </nav>
 
 <script>
-function fmtRp(n){return "Rp "+n.toLocaleString("id-ID");}
+function fmtRp(n){return "Rp "+(n||0).toLocaleString("id-ID");}
 const namaBulan=["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
 const namaBulanPanjang=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const bahanKategori=["Obat","Sampo","Kit Body","Kit Ban"];
 
-const bulanData = namaBulan.map((nm,i)=>{
-  const motor=80+i*6, pendapatan=motor*38000;
-  const kBahan={Obat:10+i,Sampo:8+i,"Kit Body":5+i,"Kit Ban":4+i};
-  const totalBahan=Object.values(kBahan).reduce((a,b)=>a+b,0);
-  const pengeluaran=1200000+i*45000;
-  return {nama:nm, motor, pendapatan, kBahan, totalBahan, pengeluaran, pemasukan:pendapatan-pengeluaran};
-});
-function daysInMonth(bi){ return [31,28,31,30,31,30,31,31,30,31,30,31][bi]; }
-function hariForBulan(bi){
-  const n=daysInMonth(bi);
-  return Array.from({length:n}).map((_,i)=>{
-    const motor=18+(i%9)*2, pendapatan=motor*38000;
-    const kBahan={Obat:1+i%3,Sampo:1+i%2,"Kit Body":i%4===0?1:0,"Kit Ban":i%5===0?1:0};
-    const totalBahan=Object.values(kBahan).reduce((a,b)=>a+b,0);
-    const pengeluaran=80000+(i%6)*15000;
-    return {day:i+1, tgl:`${i+1} ${namaBulan[bi]} 2026`, motor, pendapatan, kBahan, totalBahan, pengeluaran, pemasukan:pendapatan-pengeluaran};
-  });
+// ====================================================================
+// Sambungan ke Apps Script
+// ====================================================================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
+
+function daysInMonth(bi,tahun){
+  return new Date(tahun, bi+1, 0).getDate();
 }
-function weekRanges(bi){
-  const n=daysInMonth(bi);
+function weekRanges(bi,tahun){
+  const n=daysInMonth(bi,tahun);
   return [[1,7],[8,14],[15,21],[22,n]];
 }
-function weekAgg(bi,wIdx){
-  const [lo,hi]=weekRanges(bi)[wIdx];
-  const days=hariForBulan(bi).filter(d=>d.day>=lo&&d.day<=hi);
-  const kBahan=Object.fromEntries(bahanKategori.map(k=>[k,days.reduce((a,d)=>a+d.kBahan[k],0)]));
+
+// ---- State data asli (diisi dari fetch) ----
+let bulanData = [];              // 12 entri, hasil rekap Tahunan dari server
+let bulanMentahCache = {};       // key `${tahun}-${bulan}` -> {pendapatan:[rows],bahan:[rows],pengeluaran:[rows]}
+let hariCache = {};              // key sama -> array 1 bulan hasil olahan client (motor/pendapatan/kBahan/pengeluaran/items)
+
+document.getElementById('filterBulan').innerHTML = namaBulanPanjang.map((b,i)=>`<option value="${i}">${b}</option>`).join('');
+
+let laporanTab='pendapatan', filterMode='tahunan', selBulan=new Date().getMonth(), selTahun=Number(document.getElementById('filterTahun').value || 2026);
+
+function tabLabel(t){return {pendapatan:"Pendapatan",bahan:"Penggunaan Bahan",pengeluaran:"Pengeluaran",pemasukan:"Pemasukan (otomatis)"}[t];}
+
+// ====================================================================
+// Ambil rekap Tahunan dari server (sekali per tahun dipilih)
+// ====================================================================
+function loadRekapTahunan(tahun){
+  document.getElementById('laporanList').innerHTML = '<div class="state-loading">Memuat data...</div>';
+  document.getElementById('laporanSummary').innerHTML = '<div class="state-loading">Memuat data...</div>';
+  return fetch(`${APPS_SCRIPT_URL}?modul=rekap&tahun=${tahun}`)
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status!=='success'){ throw new Error(res.message||'Gagal memuat rekap tahunan'); }
+      const d=res.data;
+      bulanData = namaBulan.map((nm,i)=>{
+        const p=d.pendapatan[i]||{motor:0,pendapatan:0};
+        const b=d.bahan[i]||{kBahan:{},totalBahan:0};
+        const e=d.pengeluaran[i]||{pengeluaran:0};
+        return {nama:nm, motor:p.motor, pendapatan:p.pendapatan, kBahan:b.kBahan, totalBahan:b.totalBahan, pengeluaran:e.pengeluaran, pemasukan:p.pendapatan-e.pengeluaran};
+      });
+    })
+    .catch(err=>{
+      document.getElementById('laporanList').innerHTML = `<div class="state-loading" style="color:var(--red);">Gagal memuat data: ${err.message}</div>`;
+      document.getElementById('laporanSummary').innerHTML = '';
+      throw err;
+    });
+}
+
+// ====================================================================
+// Ambil data mentah 1 bulan dari server, lalu olah jadi array harian di client
+// (strategi Hybrid: Mingguan/Harian/Detail dihitung di client)
+// ====================================================================
+function loadRekapBulanan(tahun,bulan){
+  const key=`${tahun}-${bulan}`;
+  if(hariCache[key]) return Promise.resolve(hariCache[key]);
+
+  document.getElementById('laporanList').innerHTML = '<div class="state-loading">Memuat data...</div>';
+  document.getElementById('laporanSummary').innerHTML = '<div class="state-loading">Memuat data...</div>';
+
+  return fetch(`${APPS_SCRIPT_URL}?modul=rekap&tahun=${tahun}&bulan=${bulan}`)
+    .then(res=>res.json())
+    .then(res=>{
+      if(res.status!=='success'){ throw new Error(res.message||'Gagal memuat rekap bulanan'); }
+      bulanMentahCache[key]=res.data;
+      hariCache[key]=buildHariArray(res.data,tahun,bulan);
+      return hariCache[key];
+    })
+    .catch(err=>{
+      document.getElementById('laporanList').innerHTML = `<div class="state-loading" style="color:var(--red);">Gagal memuat data: ${err.message}</div>`;
+      document.getElementById('laporanSummary').innerHTML = '';
+      throw err;
+    });
+}
+
+function buildHariArray(raw,tahun,bulan){
+  const n=daysInMonth(bulan,tahun);
+  const hari=Array.from({length:n}).map((_,i)=>({
+    day:i+1, tgl:`${i+1} ${namaBulan[bulan]} ${tahun}`,
+    motor:0, pendapatan:0, kBahan:{}, totalBahan:0, pengeluaran:0, pemasukan:0,
+    items:{motor:[],bahan:[],pengeluaran:[]}
+  }));
+  raw.pendapatan.forEach(r=>{
+    const tgl=parseInt(String(r['Tanggal']).split('/')[0],10);
+    const h=hari[tgl-1]; if(!h) return;
+    const tarif=Number(r['Tarif'])||0;
+    h.motor+=1; h.pendapatan+=tarif;
+    h.items.motor.push({nama:r['Nama Motor']||'', plat:r['Nomor Polisi']||'', jenis:r['Jenis Kendaraan']||'', harga:tarif, ket:r['Keterangan']||''});
+  });
+  raw.bahan.forEach(r=>{
+    const tgl=parseInt(String(r['Tanggal']).split('/')[0],10);
+    const h=hari[tgl-1]; if(!h) return;
+    const nama=r['Nama Bahan']||''; const jumlah=Number(r['Total Terpakai'])||0;
+    h.kBahan[nama]=(h.kBahan[nama]||0)+jumlah; h.totalBahan+=jumlah;
+    h.items.bahan.push({nama, jumlah, ket:r['Keterangan']||''});
+  });
+  raw.pengeluaran.forEach(r=>{
+    const tgl=parseInt(String(r['Tanggal']).split('/')[0],10);
+    const h=hari[tgl-1]; if(!h) return;
+    const nominal=Number(r['Jumlah'])||0;
+    h.pengeluaran+=nominal;
+    h.items.pengeluaran.push({ket:r['Uraian Pengeluaran']||'', nominal});
+  });
+  hari.forEach(h=>h.pemasukan=h.pendapatan-h.pengeluaran);
+  return hari;
+}
+
+function weekAgg(bidx,tahun,wIdx){
+  const key=`${tahun}-${bidx}`;
+  const hari=hariCache[key]||[];
+  const [lo,hi]=weekRanges(bidx,tahun)[wIdx];
+  const days=hari.filter(d=>d.day>=lo&&d.day<=hi);
+  const kBahan={};
+  days.forEach(d=>Object.keys(d.kBahan).forEach(k=>{kBahan[k]=(kBahan[k]||0)+d.kBahan[k];}));
   return {
     motor:days.reduce((a,d)=>a+d.motor,0),
     pendapatan:days.reduce((a,d)=>a+d.pendapatan,0),
@@ -233,19 +325,21 @@ function weekAgg(bi,wIdx){
     pemasukan:days.reduce((a,d)=>a+d.pemasukan,0)
   };
 }
-const detailMotor=[{nama:"Yamaha Nmax",plat:"DV 9806 XX",jenis:"Trail",harga:50000,ket:""},{nama:"Honda Beat",plat:"DV 1123 AB",jenis:"Harian",harga:30000,ket:"Cuci + semir ban"},{nama:"Honda Vario",plat:"DV 7788 CD",jenis:"Harian",harga:30000,ket:""}];
-const detailPengeluaran=[{ket:"Beli sabun cuci",nominal:120000},{ket:"Servis kompresor",nominal:300000}];
 
-document.getElementById('filterBulan').innerHTML = namaBulanPanjang.map((b,i)=>`<option value="${i}">${b}</option>`).join('');
-
-let laporanTab='pendapatan', filterMode='tahunan', selBulan=9;
-
-function tabLabel(t){return {pendapatan:"Pendapatan",bahan:"Penggunaan Bahan",pengeluaran:"Pengeluaran",pemasukan:"Pemasukan (otomatis)"}[t];}
+function rowValFor(t,d){
+  if(t==='pendapatan') return {main:d.motor+" motor", val:fmtRp(d.pendapatan)};
+  if(t==='bahan'){
+    const breakdown=bahanKategori.filter(k=>d.kBahan[k]>0).map(k=>k+" "+d.kBahan[k]).join(' · ');
+    return {main:breakdown, val:(d.totalBahan||0)+" botol"};
+  }
+  if(t==='pengeluaran') return {main:"", val:fmtRp(d.pengeluaran)};
+  return {main:"", val:fmtRp(d.pemasukan)};
+}
 
 function renderSummary(){
   const wrap=document.getElementById('laporanSummary');
   const base = filterMode==='tahunan'
-    ? {motor:bulanData.reduce((a,b)=>a+b.motor,0), pendapatan:bulanData.reduce((a,b)=>a+b.pendapatan,0), kBahan:Object.fromEntries(bahanKategori.map(k=>[k,bulanData.reduce((a,b)=>a+b.kBahan[k],0)])), totalBahan:bulanData.reduce((a,b)=>a+b.totalBahan,0), pengeluaran:bulanData.reduce((a,b)=>a+b.pengeluaran,0), pemasukan:bulanData.reduce((a,b)=>a+b.pemasukan,0)}
+    ? {motor:bulanData.reduce((a,b)=>a+b.motor,0), pendapatan:bulanData.reduce((a,b)=>a+b.pendapatan,0), kBahan:Object.fromEntries(bahanKategori.map(k=>[k,bulanData.reduce((a,b)=>a+(b.kBahan[k]||0),0)])), totalBahan:bulanData.reduce((a,b)=>a+b.totalBahan,0), pengeluaran:bulanData.reduce((a,b)=>a+b.pengeluaran,0), pemasukan:bulanData.reduce((a,b)=>a+b.pemasukan,0)}
     : bulanData[selBulan];
 
   if(laporanTab==='pendapatan'){
@@ -255,9 +349,9 @@ function renderSummary(){
     </div>`;
   } else if(laporanTab==='bahan'){
     wrap.innerHTML=`<div class="summary-grid">
-      ${bahanKategori.map(k=>`<div class="summary-card"><div class="lbl">${k}</div><div class="val">${base.kBahan[k]} botol</div></div>`).join('')}
+      ${bahanKategori.map(k=>`<div class="summary-card"><div class="lbl">${k}</div><div class="val">${base.kBahan[k]||0} botol</div></div>`).join('')}
     </div>
-    <div class="summary-total"><div class="lbl">Total Pemakaian Bahan</div><div class="val">${base.totalBahan} botol</div></div>`;
+    <div class="summary-total"><div class="lbl">Total Pemakaian Bahan</div><div class="val">${base.totalBahan||0} botol</div></div>`;
   } else if(laporanTab==='pengeluaran'){
     wrap.innerHTML=`<div class="summary-total"><div class="lbl">Total Pengeluaran</div><div class="val">${fmtRp(base.pengeluaran)}</div></div>`;
   } else {
@@ -265,32 +359,52 @@ function renderSummary(){
   }
 }
 
-function rowValFor(t,d){
-  if(t==='pendapatan') return {main:d.motor+" motor", val:fmtRp(d.pendapatan)};
-  if(t==='bahan'){
-    const breakdown=bahanKategori.filter(k=>d.kBahan[k]>0).map(k=>k+" "+d.kBahan[k]).join(' · ');
-    return {main:breakdown, val:d.totalBahan+" botol"};
-  }
-  if(t==='pengeluaran') return {main:"", val:fmtRp(d.pengeluaran)};
-  return {main:"", val:fmtRp(d.pemasukan)};
-}
-
-function renderLaporanList(){
-  document.getElementById('pageSub').textContent = (filterMode==='tahunan'?"Rekap Tahunan 2026 · ":`Rekap ${namaBulan[selBulan]} 2026 · `)+tabLabel(laporanTab);
-  document.getElementById('breakdownTitle').textContent = filterMode==='tahunan' ? "Breakdown per Bulan" : "Breakdown per Tanggal";
+function renderLaporanListTahunan(){
+  document.getElementById('pageSub').textContent = `Rekap Tahunan ${selTahun} · `+tabLabel(laporanTab);
+  document.getElementById('breakdownTitle').textContent = "Breakdown per Bulan";
   const wrap=document.getElementById('laporanList');
-  const data = filterMode==='tahunan' ? bulanData : hariForBulan(selBulan);
   const clickable = laporanTab!=='pemasukan';
-  wrap.innerHTML = data.map((d,idx)=>{
-    const label = filterMode==='tahunan' ? d.nama+" 2026" : d.tgl;
+  wrap.innerHTML = bulanData.map((d,idx)=>{
+    const label = d.nama+" "+selTahun;
     const r = rowValFor(laporanTab,d);
-    const onclick = clickable ? (filterMode==='tahunan' ? `onclick="openBulan(${idx})"` : `onclick="openHari(${idx})"`) : '';
+    const onclick = clickable ? `onclick="openBulan(${idx})"` : '';
     return `<div class="list-row ${clickable?'':'nolink'}" ${onclick}>
       <div><div class="l-main">${label}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div>
       <div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div>${clickable?'<span class="l-chev">›</span>':''}</div>
     </div>`;
   }).join('');
   renderSummary();
+}
+
+function renderLaporanListBulanan(hari){
+  document.getElementById('pageSub').textContent = `Rekap ${namaBulan[selBulan]} ${selTahun} · `+tabLabel(laporanTab);
+  document.getElementById('breakdownTitle').textContent = "Breakdown per Tanggal";
+  const wrap=document.getElementById('laporanList');
+  const clickable = laporanTab!=='pemasukan';
+  wrap.innerHTML = hari.map((d,idx)=>{
+    const r = rowValFor(laporanTab,d);
+    const onclick = clickable ? `onclick="openHari(${idx})"` : '';
+    return `<div class="list-row ${clickable?'':'nolink'}" ${onclick}>
+      <div><div class="l-main">${d.tgl}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div>
+      <div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div>${clickable?'<span class="l-chev">›</span>':''}</div>
+    </div>`;
+  }).join('');
+  // update bulanData[selBulan] (dipakai summary Bulanan) dari data asli bulan ini
+  const agg={motor:0,pendapatan:0,kBahan:{},totalBahan:0,pengeluaran:0,pemasukan:0};
+  hari.forEach(h=>{
+    agg.motor+=h.motor; agg.pendapatan+=h.pendapatan; agg.pengeluaran+=h.pengeluaran; agg.pemasukan+=h.pemasukan; agg.totalBahan+=h.totalBahan;
+    Object.keys(h.kBahan).forEach(k=>{agg.kBahan[k]=(agg.kBahan[k]||0)+h.kBahan[k];});
+  });
+  bulanData[selBulan]=Object.assign({nama:namaBulan[selBulan]},agg);
+  renderSummary();
+}
+
+function renderLaporanList(){
+  if(filterMode==='tahunan'){
+    loadRekapTahunan(selTahun).then(()=>renderLaporanListTahunan()).catch(()=>{});
+  } else {
+    loadRekapBulanan(selTahun,selBulan).then(hari=>renderLaporanListBulanan(hari)).catch(()=>{});
+  }
 }
 
 const svgPencil='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
@@ -311,16 +425,17 @@ function editDetailItem(key){
   openForm(laporanTab,true);
 }
 function detailBodyFor(t,d){
-  if(t==='pendapatan') return `<div class="section-title">Detail Kendaraan</div><div class="list-card">${detailMotor.map((m,i)=>`<div class="list-row nolink" data-key="p${i}"><div><div class="l-main">${i+1}. ${m.nama} — ${m.plat}</div><div class="l-sub" style="font-size:12.5px;">${m.jenis}${m.ket?' · '+m.ket:''}</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${fmtRp(m.harga)}</div>${actionIcons('p'+i)}</div></div>`).join('')}</div>`;
-  if(t==='bahan') return `<div class="section-title">Rincian Bahan</div><div class="list-card">${bahanKategori.map((k,i)=>`<div class="list-row nolink" data-key="b${i}"><div class="l-main">${k}</div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${d.kBahan[k]} botol</div>${actionIcons('b'+i)}</div></div>`).join('')}</div>`;
-  if(t==='pengeluaran') return `<div class="section-title">Rincian Pengeluaran</div><div class="list-card">${detailPengeluaran.map((p,i)=>`<div class="list-row nolink" data-key="e${i}"><div class="l-main">${p.ket}</div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${fmtRp(p.nominal)}</div>${actionIcons('e'+i)}</div></div>`).join('')}</div>`;
+  if(t==='pendapatan') return `<div class="section-title">Detail Kendaraan</div><div class="list-card">${d.items.motor.map((m,i)=>`<div class="list-row nolink" data-key="p${i}"><div><div class="l-main">${i+1}. ${m.nama} — ${m.plat}</div><div class="l-sub" style="font-size:12.5px;">${m.jenis}${m.ket?' · '+m.ket:''}</div></div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${fmtRp(m.harga)}</div>${actionIcons('p'+i)}</div></div>`).join('') || '<div class="list-row nolink"><div class="l-main" style="color:var(--muted);">Belum ada data</div></div>'}</div>`;
+  if(t==='bahan') return `<div class="section-title">Rincian Bahan</div><div class="list-card">${d.items.bahan.map((b,i)=>`<div class="list-row nolink" data-key="b${i}"><div class="l-main">${b.nama}${b.ket?` · ${b.ket}`:''}</div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${b.jumlah} botol</div>${actionIcons('b'+i)}</div></div>`).join('') || '<div class="list-row nolink"><div class="l-main" style="color:var(--muted);">Belum ada data</div></div>'}</div>`;
+  if(t==='pengeluaran') return `<div class="section-title">Rincian Pengeluaran</div><div class="list-card">${d.items.pengeluaran.map((p,i)=>`<div class="list-row nolink" data-key="e${i}"><div class="l-main">${p.ket}</div><div style="display:flex;align-items:center;gap:10px;"><div class="l-val">${fmtRp(p.nominal)}</div>${actionIcons('e'+i)}</div></div>`).join('') || '<div class="list-row nolink"><div class="l-main" style="color:var(--muted);">Belum ada data</div></div>'}</div>`;
   return '';
 }
 
 let drillBulanIdx=0, drillMode='harian', drillPage=0;
 function renderDrillHarian(bidx){
-  const hari=hariForBulan(bidx);
-  const perPage=7, totalPage=Math.ceil(hari.length/perPage);
+  const key=`${selTahun}-${bidx}`;
+  const hari=hariCache[key]||[];
+  const perPage=7, totalPage=Math.ceil(hari.length/perPage)||1;
   if(drillPage>=totalPage) drillPage=totalPage-1;
   const shown=hari.slice(drillPage*perPage,(drillPage+1)*perPage);
   let pag='';
@@ -332,9 +447,9 @@ function renderDrillHarian(bidx){
   </div>${pag}`;
 }
 function renderDrillMingguan(bidx){
-  const ranges=weekRanges(bidx);
+  const ranges=weekRanges(bidx,selTahun);
   return `<div class="section-title">Rekap Mingguan</div><div class="list-card">
-    ${ranges.map((rg,wi)=>{const w=weekAgg(bidx,wi);const r=rowValFor(laporanTab,w);return `<div class="list-row" onclick="openMinggu(${bidx},${wi})"><div><div class="l-main">Minggu ${wi+1}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div><div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div><span class="l-chev">›</span></div></div>`;}).join('')}
+    ${ranges.map((rg,wi)=>{const w=weekAgg(bidx,selTahun,wi);const r=rowValFor(laporanTab,w);return `<div class="list-row" onclick="openMinggu(${bidx},${wi})"><div><div class="l-main">Minggu ${wi+1}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div><div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div><span class="l-chev">›</span></div></div>`;}).join('')}
   </div>`;
 }
 function renderDrillBody(){
@@ -344,9 +459,10 @@ function renderDrillBody(){
     </div>` + (laporanTab==='pemasukan' ? renderDrillHarian(drillBulanIdx) : (drillMode==='harian'?renderDrillHarian(drillBulanIdx):renderDrillMingguan(drillBulanIdx)));
 }
 function openMinggu(bidx,wIdx){
-  const [lo,hi]=weekRanges(bidx)[wIdx];
-  const hari=hariForBulan(bidx).filter(d=>d.day>=lo&&d.day<=hi);
-  document.getElementById('drillTitle').textContent = `Minggu ${wIdx+1} — ${namaBulan[bidx]} 2026`;
+  const key=`${selTahun}-${bidx}`;
+  const [lo,hi]=weekRanges(bidx,selTahun)[wIdx];
+  const hari=(hariCache[key]||[]).filter(d=>d.day>=lo&&d.day<=hi);
+  document.getElementById('drillTitle').textContent = `Minggu ${wIdx+1} — ${namaBulan[bidx]} ${selTahun}`;
   document.getElementById('drillBody').innerHTML = `<div class="section-title">Rincian Harian</div><div class="list-card">
     ${hari.map((h)=>{const r=rowValFor(laporanTab,h);return `<div class="list-row" onclick="openHariFromDrill(${bidx},${h.day-1})"><div><div class="l-main">${h.tgl}</div>${r.main?`<div class="l-sub">${r.main}</div>`:''}</div><div style="display:flex;align-items:center;"><div class="l-val">${r.val}</div><span class="l-chev">›</span></div></div>`;}).join('')}
   </div>`;
@@ -354,18 +470,23 @@ function openMinggu(bidx,wIdx){
 function openBulan(idx){
   drillBulanIdx=idx; drillMode='harian'; drillPage=0;
   const b=bulanData[idx];
-  document.getElementById('drillTitle').textContent = b.nama+" 2026 — "+tabLabel(laporanTab);
-  renderDrillBody();
+  document.getElementById('drillTitle').textContent = b.nama+" "+selTahun+" — "+tabLabel(laporanTab);
+  document.getElementById('drillBody').innerHTML = '<div class="state-loading">Memuat data...</div>';
   document.getElementById('drillView').classList.add('open');
+  loadRekapBulanan(selTahun,idx).then(()=>renderDrillBody());
 }
 function openHari(idx){
-  const d=hariForBulan(selBulan)[idx];
+  const key=`${selTahun}-${selBulan}`;
+  const d=(hariCache[key]||[])[idx];
+  if(!d) return;
   document.getElementById('drillTitle').textContent = d.tgl;
   document.getElementById('drillBody').innerHTML = detailBodyFor(laporanTab,d);
   document.getElementById('drillView').classList.add('open');
 }
 function openHariFromDrill(bidx,hidx){
-  const d=hariForBulan(bidx)[hidx];
+  const key=`${selTahun}-${bidx}`;
+  const d=(hariCache[key]||[])[hidx];
+  if(!d) return;
   document.getElementById('drillTitle').textContent = d.tgl;
   document.getElementById('drillBody').innerHTML = detailBodyFor(laporanTab,d);
 }
@@ -377,12 +498,14 @@ document.getElementById('filterMode').onchange=e=>{
   renderLaporanList(); updateFab();
 };
 document.getElementById('filterBulan').onchange=e=>{ selBulan=+e.target.value; renderLaporanList(); };
+document.getElementById('filterTahun').onchange=e=>{ selTahun=+e.target.value; bulanData=[]; renderLaporanList(); };
 
 document.querySelectorAll('#laporanTabs .tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('#laporanTabs .tab').forEach(x=>x.classList.remove('active'));
   t.classList.add('active');
   laporanTab=t.dataset.ltab;
-  renderLaporanList(); updateFab();
+  if(filterMode==='tahunan'){ renderLaporanListTahunan(); } else { renderLaporanListBulanan(hariCache[`${selTahun}-${selBulan}`]||[]); }
+  updateFab();
 });
 
 function updateFab(){
@@ -453,6 +576,11 @@ function selChoice(el,v){
   if(v==='trail'){ document.getElementById('f-pdt-tarif').value='50000'; }
 }
 
+// Invalidate cache supaya rekap otomatis ter-refresh setelah data baru disimpan
+function invalidateRekapCache(){
+  bulanMentahCache={}; hariCache={}; bulanData=[];
+}
+
 function simpanBahanKeSheet(){
   const btn=document.getElementById('btnSimpanBahan');
   const statusEl=document.getElementById('f-bhn-status');
@@ -467,7 +595,7 @@ function simpanBahanKeSheet(){
   fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody})
     .then(res=>res.json())
     .then(res=>{
-      if(res.status==='success'){ closeSheet(); }
+      if(res.status==='success'){ invalidateRekapCache(); closeSheet(); renderLaporanList(); }
       else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
     })
     .catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
@@ -488,16 +616,11 @@ function simpanPengeluaranKeSheet(){
   fetch(APPS_SCRIPT_URL,{method:'POST',body:formBody})
     .then(res=>res.json())
     .then(res=>{
-      if(res.status==='success'){ closeSheet(); }
+      if(res.status==='success'){ invalidateRekapCache(); closeSheet(); renderLaporanList(); }
       else { btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal menyimpan: '+(res.message||'Terjadi kesalahan'); }
     })
     .catch(err=>{ btn.disabled=false; btn.textContent='Simpan'; statusEl.style.display='block'; statusEl.style.color='var(--red)'; statusEl.textContent='Gagal terhubung ke server: '+err.message; });
 }
-
-// ====================================================================
-// Sambungan ke Apps Script — modul Pendapatan (POST simpan data)
-// ====================================================================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw17AsxQ9s-eLLq4wrcyBIXmipMc0Ak0jSbIpF6NSrN5VVg-0aWlZGqDID9VILfxMFszQ/exec';
 
 function simpanPendapatanKeSheet(){
   const btn=document.getElementById('btnSimpanPendapatan');
@@ -526,7 +649,9 @@ function simpanPendapatanKeSheet(){
   .then(res=>res.json())
   .then(res=>{
     if(res.status==='success'){
+      invalidateRekapCache();
       closeSheet();
+      renderLaporanList();
     } else {
       btn.disabled=false; btn.textContent='Simpan';
       statusEl.style.display='block'; statusEl.style.color='var(--red)';
